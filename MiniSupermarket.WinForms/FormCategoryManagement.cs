@@ -1,4 +1,6 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Net.NetworkInformation;
 using System.Windows.Forms;
 
 namespace MiniSupermarket.WinForms
@@ -7,10 +9,25 @@ namespace MiniSupermarket.WinForms
     {
 
         // Khởi tạo HttpClient tĩnh kết nối trực tiếp đến Web API (Đảm bảo số Port https://localhost:7123 khớp với API của bạn)
-        private static readonly HttpClient _client = new HttpClient
+        //private static readonly HttpClient _client = new HttpClient
+        //{
+        //    BaseAddress = new Uri("https://localhost:7132/api/")
+        //};
+        private HttpClient GetAuthenticatedClient()
         {
-            BaseAddress = new Uri("https://localhost:7132/api/")
-        };
+            var client = new HttpClient
+            {
+                BaseAddress = new Uri("https://localhost:7132/api/")
+            };
+
+            // Đính kèm Token vào Header theo chuẩn Bearer Authentication
+            if (!string.IsNullOrEmpty(SessionManager.JwtToken))
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SessionManager.JwtToken);
+            }
+            return client;
+        }
+        // Ví dụ áp dụng khi gọi hàm tải dữ liệu LoadDataAsync():
 
         public FormCategoryManagement()
         {
@@ -28,6 +45,7 @@ namespace MiniSupermarket.WinForms
         {
             try
             {
+                using var _client = GetAuthenticatedClient();
                 // Gửi request GET tới endpoint "categories", tự động giải tuần tự hóa chuỗi JSON thành List<CategoryDto>
                 var categories = await _client.GetFromJsonAsync<List<CategoryDto>>("categories");
                 dgvCategories.DataSource = categories; // Gán nguồn dữ liệu cho bảng hiển thị
@@ -49,10 +67,13 @@ namespace MiniSupermarket.WinForms
         {
             if (e.RowIndex >= 0)
             {
-                DataGridViewRow row = dgvCategories.Rows[e.RowIndex];
-                txtId.Text = row.Cells["CategoryId"].Value.ToString();
-                txtCategoryName.Text = row.Cells["CategoryName"].Value.ToString();
-                txtDescription.Text = row.Cells["Description"]?.Value?.ToString() ?? string.Empty;
+                var cat = dgvCategories.Rows[e.RowIndex].DataBoundItem as CategoryDto;
+                if (cat != null)
+                {
+                    txtId.Text = cat.CategoryId.ToString();
+                    txtCategoryName.Text = cat.CategoryName;
+                    txtDescription.Text = cat.Description ?? string.Empty;
+                }
             }
         }
 
@@ -64,7 +85,7 @@ namespace MiniSupermarket.WinForms
                 CategoryName = txtCategoryName.Text,
                 Description = txtDescription.Text
             };
-
+            using var _client = GetAuthenticatedClient();
             // Gửi request POST kèm theo đối tượng dạng JSON
             var response = await _client.PostAsJsonAsync("categories", newCat);
             if (response.IsSuccessStatusCode)
@@ -95,6 +116,7 @@ namespace MiniSupermarket.WinForms
                 CategoryName = txtCategoryName.Text,
                 Description = txtDescription.Text
             };
+            using var _client = GetAuthenticatedClient();
 
             // Gửi request PUT kèm ID trên đường dẫn URI
             var response = await _client.PutAsJsonAsync($"categories/{id}", updateCat);
@@ -123,6 +145,7 @@ namespace MiniSupermarket.WinForms
             var confirm = MessageBox.Show($"Bạn có chắc muốn xóa nhóm hàng ID = {id}?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm == DialogResult.Yes)
             {
+                using var _client = GetAuthenticatedClient();
                 var response = await _client.DeleteAsync($"categories/{id}");
                 if (response.IsSuccessStatusCode)
                 {
@@ -149,6 +172,7 @@ namespace MiniSupermarket.WinForms
 
             try
             {
+                using var _client = GetAuthenticatedClient();
                 // Gọi API dạng: GET /api/categories/search?keyword=abc
                 var result = await _client.GetFromJsonAsync<List<CategoryDto>>($"categories/search?keyword={keyword}");
                 dgvCategories.DataSource = result;
@@ -168,6 +192,11 @@ namespace MiniSupermarket.WinForms
         }
 
         private void dgvCategories_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void dgvCategories_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
         {
 
         }

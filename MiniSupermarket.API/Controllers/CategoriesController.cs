@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MiniSupermarket.API.Models;
 
 namespace MiniSupermarket.API.Controllers
 {
     [Route("api/[controller]")] // Định tuyến cơ sở: /api/categories
     [ApiController]
+    [Authorize]
     public class CategoriesController : ControllerBase
     {
 
@@ -54,6 +56,7 @@ namespace MiniSupermarket.API.Controllers
         }
 
         // 4. CREATE: Thêm mới nhóm hàng (POST /api/categories)
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public IActionResult Create([FromBody] Category newCat)
         {
@@ -70,6 +73,7 @@ namespace MiniSupermarket.API.Controllers
         }
 
         // 5. UPDATE: Cập nhật thông tin nhóm hàng (PUT /api/categories/{id})
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public IActionResult Update(int id, [FromBody] Category updateCat)
         {
@@ -87,6 +91,7 @@ namespace MiniSupermarket.API.Controllers
         }
 
         // 6. DELETE: Xóa nhóm hàng theo ID (DELETE /api/categories/{id})
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
@@ -98,5 +103,21 @@ namespace MiniSupermarket.API.Controllers
             _categories.Remove(cat);
             return NoContent();
         }
+        // 7. Kiểm tra quyền Admin (Chỉ tài khoản có Role = Admin mới được gọi)
+        [HttpGet("admin-dashboard")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult GetAdminDashboard()
+        {
+            return Ok(new { message = "Chào mừng Admin! Bạn có toàn quyền quản trị hệ thống siêu thị mini." });
+        }
+
+        // 8. Kiểm tra quyền chung cho nhân viên (Cả Admin và Cashier đều gọi được)
+        [HttpGet("staff-pos")]
+        [Authorize(Roles = "Admin,Cashier")]
+        public IActionResult GetStaffPos()
+        {
+            return Ok(new { message = "Màn hình POS Thu ngân sẵn sàng phục vụ bán hàng." });
+        }
+
     }
 }
