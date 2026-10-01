@@ -1,6 +1,8 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.NetworkInformation;
+using System.Text;
+using System.Text.Json;
 using System.Windows.Forms;
 
 namespace MiniSupermarket.WinForms
@@ -27,7 +29,80 @@ namespace MiniSupermarket.WinForms
             }
             return client;
         }
-        // Ví dụ áp dụng khi gọi hàm tải dữ liệu LoadDataAsync():
+
+        // ===== PHẦN THÊM MỚI: tạo nội dung thông báo lỗi chi tiết =====
+
+        // Giải thích mã HTTP bằng tiếng Việt
+        private static string GetReason(System.Net.HttpStatusCode code)
+        {
+            switch (code)
+            {
+                case System.Net.HttpStatusCode.BadRequest: return "Dữ liệu gửi lên không hợp lệ.";
+                case System.Net.HttpStatusCode.Unauthorized: return "Chưa đăng nhập hoặc token hết hạn. Hãy đăng nhập lại.";
+                case System.Net.HttpStatusCode.Forbidden: return "Bạn không có quyền thực hiện thao tác này.";
+                case System.Net.HttpStatusCode.NotFound: return "Không tìm thấy dữ liệu hoặc sai đường dẫn API.";
+                case System.Net.HttpStatusCode.Conflict: return "Dữ liệu bị trùng hoặc đang được sử dụng.";
+                case System.Net.HttpStatusCode.InternalServerError: return "Lỗi xảy ra phía Server.";
+                default: return "Lỗi không xác định.";
+            }
+        }
+
+        // Đọc response lỗi từ API -> chuỗi dễ hiểu (mã lỗi, nguyên nhân, chi tiết từng trường)
+        private static async Task<string> BuildErrorAsync(string action, HttpResponseMessage response)
+        {
+            string body = await response.Content.ReadAsStringAsync();
+            var sb = new StringBuilder();
+            sb.AppendLine($"{action} thất bại!");
+            sb.AppendLine();
+            sb.AppendLine($"Mã lỗi: {(int)response.StatusCode} ({response.StatusCode})");
+            sb.AppendLine($"Nguyên nhân: {GetReason(response.StatusCode)}");
+
+            if (!string.IsNullOrWhiteSpace(body))
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(body);
+                    var root = doc.RootElement;
+                    if (root.ValueKind == JsonValueKind.Object)
+                    {
+                        if (root.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Object)
+                        {
+                            sb.AppendLine("Chi tiết:");
+                            foreach (var field in errors.EnumerateObject())
+                                foreach (var msg in field.Value.EnumerateArray())
+                                    sb.AppendLine($"  - {field.Name}: {msg.GetString()}");
+                        }
+                        else if (root.TryGetProperty("message", out var m)) sb.AppendLine($"Chi tiết: {m.GetString()}");
+                        else if (root.TryGetProperty("detail", out var d)) sb.AppendLine($"Chi tiết: {d.GetString()}");
+                        else if (root.TryGetProperty("title", out var t)) sb.AppendLine($"Chi tiết: {t.GetString()}");
+                    }
+                    else sb.AppendLine($"Chi tiết: {body}");
+                }
+                catch (JsonException)
+                {
+                    sb.AppendLine($"Chi tiết: {(body.Length > 500 ? body.Substring(0, 500) + "..." : body)}");
+                }
+            }
+            return sb.ToString();
+        }
+
+        // Tạo nội dung cho lỗi ngoại lệ (server tắt, mất mạng, timeout...)
+        private static string BuildExceptionMessage(string action, Exception ex)
+        {
+            if (ex is HttpRequestException hre)
+            {
+                if (hre.StatusCode != null)
+                    return $"{action} thất bại!\n\nMã lỗi: {(int)hre.StatusCode} ({hre.StatusCode})\nNguyên nhân: {GetReason(hre.StatusCode.Value)}";
+                return $"{action} thất bại!\n\nKhông kết nối được tới Server.\nKiểm tra: API đã chạy chưa? Port 7132 có đúng không?\nChi tiết: {hre.Message}";
+            }
+            if (ex is TaskCanceledException)
+                return $"{action} thất bại!\n\nHết thời gian chờ phản hồi từ Server (timeout).";
+            if (ex is JsonException)
+                return $"{action} thất bại!\n\nDữ liệu Server trả về sai định dạng.\nChi tiết: {ex.Message}";
+            return $"{action} thất bại!\n\n{ex.GetType().Name}: {ex.Message}";
+        }
+
+        // ===============================================================
 
         public FormCategoryManagement()
         {
@@ -52,7 +127,7 @@ namespace MiniSupermarket.WinForms
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi kết nối Server: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(BuildExceptionMessage("Tải dữ liệu", ex), "Lỗi tải dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -85,18 +160,25 @@ namespace MiniSupermarket.WinForms
                 CategoryName = txtCategoryName.Text,
                 Description = txtDescription.Text
             };
-            using var _client = GetAuthenticatedClient();
-            // Gửi request POST kèm theo đối tượng dạng JSON
-            var response = await _client.PostAsJsonAsync("categories", newCat);
-            if (response.IsSuccessStatusCode)
+            try
             {
-                MessageBox.Show("Thêm mới thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                await LoadDataAsync(); // Tải lại danh sách mới
-                ClearInputs();         // Xóa sạch ô nhập
+                using var _client = GetAuthenticatedClient();
+                // Gửi request POST kèm theo đối tượng dạng JSON
+                var response = await _client.PostAsJsonAsync("categories", newCat);
+                if (response.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Thêm mới thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    await LoadDataAsync(); // Tải lại danh sách mới
+                    ClearInputs();         // Xóa sạch ô nhập
+                }
+                else
+                {
+                    MessageBox.Show(await BuildErrorAsync("Thêm mới", response), "Lỗi thêm mới", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Thêm mới thất bại!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(BuildExceptionMessage("Thêm mới", ex), "Lỗi thêm mới", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -116,19 +198,26 @@ namespace MiniSupermarket.WinForms
                 CategoryName = txtCategoryName.Text,
                 Description = txtDescription.Text
             };
-            using var _client = GetAuthenticatedClient();
+            try
+            {
+                using var _client = GetAuthenticatedClient();
 
-            // Gửi request PUT kèm ID trên đường dẫn URI
-            var response = await _client.PutAsJsonAsync($"categories/{id}", updateCat);
-            if (response.IsSuccessStatusCode)
-            {
-                MessageBox.Show("Cập nhật thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                await LoadDataAsync();
-                ClearInputs();
+                // Gửi request PUT kèm ID trên đường dẫn URI
+                var response = await _client.PutAsJsonAsync($"categories/{id}", updateCat);
+                if (response.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Cập nhật thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    await LoadDataAsync();
+                    ClearInputs();
+                }
+                else
+                {
+                    MessageBox.Show(await BuildErrorAsync("Cập nhật", response), "Lỗi cập nhật", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Cập nhật thất bại!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(BuildExceptionMessage("Cập nhật", ex), "Lỗi cập nhật", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -145,17 +234,24 @@ namespace MiniSupermarket.WinForms
             var confirm = MessageBox.Show($"Bạn có chắc muốn xóa nhóm hàng ID = {id}?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm == DialogResult.Yes)
             {
-                using var _client = GetAuthenticatedClient();
-                var response = await _client.DeleteAsync($"categories/{id}");
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    MessageBox.Show("Xóa thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    await LoadDataAsync();
-                    ClearInputs();
+                    using var _client = GetAuthenticatedClient();
+                    var response = await _client.DeleteAsync($"categories/{id}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Xóa thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        await LoadDataAsync();
+                        ClearInputs();
+                    }
+                    else
+                    {
+                        MessageBox.Show(await BuildErrorAsync("Xóa", response), "Lỗi xóa", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    MessageBox.Show("Xóa thất bại!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(BuildExceptionMessage("Xóa", ex), "Lỗi xóa", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -177,9 +273,9 @@ namespace MiniSupermarket.WinForms
                 var result = await _client.GetFromJsonAsync<List<CategoryDto>>($"categories/search?keyword={keyword}");
                 dgvCategories.DataSource = result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                MessageBox.Show("Không tìm thấy kết quả phù hợp!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(BuildExceptionMessage("Tìm kiếm", ex), "Lỗi tìm kiếm", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
