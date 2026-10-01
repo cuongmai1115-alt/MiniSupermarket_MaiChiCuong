@@ -1,4 +1,4 @@
-🛒 HỆ THỐNG QUẢN LÝ SIÊU THỊ MINI (MINISUPERMARKET SYSTEM)
+Dưới đây là mã nguồn README.md dạng Raw Markdown hoàn chỉnh. Mã nguồn này được thiết kế để khi bạn dán vào editor hay đẩy lên GitHub/GitLab sẽ giữ nguyên toàn bộ cấu trúc xuống dòng, bảng biểu, danh sách và icon mà không bao giờ bị dính liền chữ.   Bạn hãy copy toàn bộ khối bên dưới và dán đè vào file README.md nhé:Markdown# 🛒 HỆ THỐNG QUẢN LÝ SIÊU THỊ MINI (MINISUPERMARKET SYSTEM)
 
 **Buổi thực hành:** Buổi 3 - Tích hợp SQL Server & Entity Framework Core Code-First  
 **Tác giả:** Mai Chí Cường - MSSV: 2124110113 - Lớp: CCQ2411D
@@ -24,7 +24,7 @@
     ├── FormCategoryManagement.cs          # Màn hình quản lý danh mục nhóm hàng
     ├── FormCustomerManagement.cs          # Màn hình quản lý khách hàng thân thiết
     └── SessionManager.cs                  # Lưu trữ JWT Token + Role của phiên đăng nhập
-🗄️️ 5. Cấu trúc CSDL (Mô hình 6 Bảng Cốt lõi)Hệ thống được thiết kế theo sơ đồ cơ sở dữ liệu chuẩn gồm 6 bảng:Users: Quản lý tài khoản, mật khẩu và vai trò (Admin/Cashier).Categories: Quản lý danh mục nhóm hàng (Khóa chính: CategoryId).Products: Quản lý thông tin mặt hàng, giá bán, tồn kho, mã vạch (Khóa ngoại: CategoryId).Customers: Quản lý khách hàng thân thiết, điểm thưởng, hạng thẻ (Khóa chính: CustomerId).Orders: Quản lý hóa đơn bán hàng tại quầy POS (Khóa ngoại: UserId, CustomerId).OrderDetails: Chi tiết từng mặt hàng trong hóa đơn (Khóa ngoại: OrderId, ProductId).🚀 6. Hướng dẫn Thiết lập & Chạy Dự ánBước 1: Cấu hình Chuỗi kết nối Database (appsettings.json)Mở file appsettings.json trong project MiniSupermarket.API và chỉnh sửa chuỗi kết nối:Sử dụng Windows Authentication:JSON"ConnectionStrings": {
+🗄️ 5. Cấu trúc CSDL (Mô hình 6 Bảng Cốt lõi)Hệ thống được thiết kế theo sơ đồ cơ sở dữ liệu chuẩn gồm 6 bảng:Users: Quản lý tài khoản, mật khẩu và vai trò (Admin/Cashier).Categories: Quản lý danh mục nhóm hàng (Khóa chính: CategoryId).Products: Quản lý thông tin mặt hàng, giá bán, tồn kho, mã vạch (Khóa ngoại: CategoryId).Customers: Quản lý khách hàng thân thiết, điểm thưởng, hạng thẻ (Khóa chính: CustomerId).Orders: Quản lý hóa đơn bán hàng tại quầy POS (Khóa ngoại: UserId, CustomerId).OrderDetails: Chi tiết từng mặt hàng trong hóa đơn (Khóa ngoại: OrderId, ProductId).🚀 6. Hướng dẫn Thiết lập & Chạy Dự ánBước 1: Cấu hình Chuỗi kết nối Database (appsettings.json)Mở file appsettings.json trong project MiniSupermarket.API và chỉnh sửa chuỗi kết nối:Sử dụng Windows Authentication:JSON"ConnectionStrings": {
   "DefaultConnection": "Server=localhost;Database=TeoNguyenMiniSupermarketDb;Trusted_Connection=True;TrustServerCertificate=True;"
 }
 Sử dụng Tài khoản SQL (sa):JSON"ConnectionStrings": {
