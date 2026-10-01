@@ -1,4 +1,4 @@
-Dưới đây là mã nguồn README.md dạng Raw Markdown hoàn chỉnh. Mã nguồn này được thiết kế để khi bạn dán vào editor hay đẩy lên GitHub/GitLab sẽ giữ nguyên toàn bộ cấu trúc xuống dòng, bảng biểu, danh sách và icon mà không bao giờ bị dính liền chữ.   Bạn hãy copy toàn bộ khối bên dưới và dán đè vào file README.md nhé:Markdown# 🛒 HỆ THỐNG QUẢN LÝ SIÊU THỊ MINI (MINISUPERMARKET SYSTEM)
+🛒 HỆ THỐNG QUẢN LÝ SIÊU THỊ MINI (MINISUPERMARKET SYSTEM)
 
 **Buổi thực hành:** Buổi 3 - Tích hợp SQL Server & Entity Framework Core Code-First  
 **Tác giả:** Mai Chí Cường - MSSV: 2124110113 - Lớp: CCQ2411D
