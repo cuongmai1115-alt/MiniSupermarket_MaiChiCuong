@@ -1,8 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
+using MiniSupermarket.API.Data;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ĐĂNG KÝ DBCONTEXT (SQL Server) qua Dependency Injection
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<SupermarketDbContext>(options =>
+    options.UseSqlServer(connectionString));
 
 // Cấu hình dịch vụ xác thực JWT Bearer
 var jwtSecret = builder.Configuration["JwtSettings:Secret"] ?? "SupermarketSecretKeyDoAnMonHoc2026SecureString!!";
@@ -34,7 +41,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImNhc2hpZXIiLCJyb2xlIjoiQ2FzaGllciIsIm5iZiI6MTc5MDI0OTg3MCwiZXhwIjoxNzkwMjU3MDcwLCJpYXQiOjE3OTAyNDk4NzB9.edMKwAojp5Ir-7JdSEvwFtMDraFeaTtJMOUok9DTmrw"
+        Description = "Nhập token JWT vào ô bên dưới (không cần gõ chữ Bearer)."
     });
 
     // Yêu cầu Swagger sử dụng JWT
@@ -53,6 +60,7 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
