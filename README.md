@@ -1,35 +1,501 @@
-🛒 HỆ THỐNG QUẢN LÝ SIÊU THỊ MINI (MINISUPERMARKET SYSTEM)
+# 🛒 HỆ THỐNG QUẢN LÝ SIÊU THỊ MINI
 
-**Buổi thực hành:** Buổi 3 - Tích hợp SQL Server & Entity Framework Core Code-First  
-**Tác giả:** Mai Chí Cường - MSSV: 2124110113 - Lớp: CCQ2411D
-🏗️ 1. Mô hình Kiến trúc Hệ thống (Client - Server)Dự án được xây dựng theo mô hình phân tầng hiện đại, tách biệt hoàn toàn giữa Backend và Frontend:MiniSupermarket.API (Backend): Dự án ASP.NET Core Web API chịu trách nhiệm xử lý logic nghiệp vụ, bảo mật JWT, kết nối cơ sở dữ liệu quan hệ Microsoft SQL Server thông qua Entity Framework Core (EF Core) và cung cấp các RESTful API chuẩn hóa bằng phương thức bất đồng bộ (async/await).MiniSupermarket.WinForms (Frontend Client): Ứng dụng Windows Forms đóng vai trò là máy trạm POS tại quầy, sử dụng HttpClient kết hợp Bearer Token để tương tác với API, thực hiện các thao tác CRUD danh mục, sản phẩm và khách hàng. Dữ liệu được lưu trữ vĩnh viễn trên CSDL.🔐 2. Cơ chế Bảo mật & Quản lý Dữ liệuXác thực & Phân quyền (JWT Authentication & Authorization)Xác thực (Authentication): Người dùng đăng nhập qua POST /api/auth/login, hệ thống kiểm tra và cấp phát chuỗi JWT Token (Stateless).Phân quyền (Authorization): Token chứa Claim Role để phân quyền sử dụng endpoint:Admin: Toàn quyền Xem, Thêm, Sửa, Xóa trên tất cả các danh mục, sản phẩm, khách hàng.Cashier: Được quyền Xem, Tìm kiếm và Tạo mới thông tin khách hàng/đơn hàng, không có quyền xóa hoặc sửa cấu hình hệ thống.Không có Token: Trả về 401 Unauthorized.Không đủ quyền: Trả về 403 Forbidden.Quản lý Dữ liệu Bền vững (SQL Server & EF Core Code-First)Thay thế hoàn toàn cơ chế lưu tạm trên RAM (In-Memory) ở Buổi 1 & 2.Tự động khởi tạo cấu trúc bảng SQL Server qua EF Core Migrations (Add-Migration, Update-Database).Tích hợp Data Seeding tự động nạp dữ liệu mẫu ban đầu cho danh mục và khách hàng.Tài khoản DemoUsernamePasswordRoleadmin123456Admincashier123456Cashier🛠️ 3. Công nghệ Sử dụngNgôn ngữ: C# (.NET 8.0)Backend: ASP.NET Core Web API, EF Core 8.0, LINQ, Async/AwaitDatabase & ORM: Microsoft SQL Server, Entity Framework Core Code-FirstNuGet Packages Backend:Microsoft.EntityFrameworkCore.SqlServerMicrosoft.EntityFrameworkCore.ToolsMicrosoft.EntityFrameworkCore.DesignMicrosoft.AspNetCore.Authentication.JwtBearerFrontend: Windows Forms (.NET 8.0), System.Net.Http.JsonCông cụ kiểm thử & quản lý CSDL: Swagger UI, SQL Server Management Studio (SSMS)📂 4. Cấu trúc SolutionPlaintextMiniSupermarketSystem/
-│
-├── MiniSupermarket.API/                  # Dự án Web API (Backend)
-│   ├── Controllers/
-│   │   ├── AuthController.cs             # Đăng nhập, cấp phát JWT Token
-│   │   ├── CategoriesController.cs       # CRUD & Search nhóm hàng từ SQL Server
-│   │   └── CustomersController.cs        # CRUD & Search khách hàng thân thiết
-│   ├── Data/
-│   │   └── SupermarketDbContext.cs       # DbContext ánh xạ CSDL & Data Seeding
-│   ├── Migrations/                       # Chứa mã Migration sinh tự động từ EF Core
-│   ├── Models/                           # Các thực thể (Entities)
-│   │   ├── Category.cs                   # Thực thể Danh mục (Bảng Categories)
-│   │   ├── Product.cs                    # Thực thể Sản phẩm (Bảng Products)
-│   │   └── Customer.cs                   # Thực thể Khách hàng (Bảng Customers)
-│   ├── appsettings.json                  # Cấu hình Chuỗi kết nối SQL Server & JWT Secret
-│   └── Program.cs                        # Cấu hình Dependency Injection, DbContext & Middleware
-│
-└── MiniSupermarket.WinForms/             # Dự án Windows Forms (Frontend Client)
-    ├── FormLogin.cs                       # Màn hình đăng nhập
-    ├── FormCategoryManagement.cs          # Màn hình quản lý danh mục nhóm hàng
-    ├── FormCustomerManagement.cs          # Màn hình quản lý khách hàng thân thiết
-    └── SessionManager.cs                  # Lưu trữ JWT Token + Role của phiên đăng nhập
-🗄️ 5. Cấu trúc CSDL (Mô hình 6 Bảng Cốt lõi)Hệ thống được thiết kế theo sơ đồ cơ sở dữ liệu chuẩn gồm 6 bảng:Users: Quản lý tài khoản, mật khẩu và vai trò (Admin/Cashier).Categories: Quản lý danh mục nhóm hàng (Khóa chính: CategoryId).Products: Quản lý thông tin mặt hàng, giá bán, tồn kho, mã vạch (Khóa ngoại: CategoryId).Customers: Quản lý khách hàng thân thiết, điểm thưởng, hạng thẻ (Khóa chính: CustomerId).Orders: Quản lý hóa đơn bán hàng tại quầy POS (Khóa ngoại: UserId, CustomerId).OrderDetails: Chi tiết từng mặt hàng trong hóa đơn (Khóa ngoại: OrderId, ProductId).🚀 6. Hướng dẫn Thiết lập & Chạy Dự ánBước 1: Cấu hình Chuỗi kết nối Database (appsettings.json)Mở file appsettings.json trong project MiniSupermarket.API và chỉnh sửa chuỗi kết nối:Sử dụng Windows Authentication:JSON"ConnectionStrings": {
-  "DefaultConnection": "Server=localhost;Database=TeoNguyenMiniSupermarketDb;Trusted_Connection=True;TrustServerCertificate=True;"
+## Buổi 3: Tích hợp SQL Server và Entity Framework Core Code-First
+
+------------------------------------------------------------------------
+
+## 1. Mục tiêu và bối cảnh thực tế
+
+Buổi thực hành 3 tập trung vào việc tích hợp **Microsoft SQL Server** và
+**Entity Framework Core Code-First** vào hệ thống quản lý siêu thị mini.
+
+### Mục tiêu
+
+-   Thay thế cơ chế lưu dữ liệu tạm trên RAM (In-Memory) ở Buổi 1 và
+    Buổi 2 bằng cơ sở dữ liệu quan hệ Microsoft SQL Server.
+-   Làm quen với Entity Framework Core (EF Core) Code-First.
+-   Sử dụng các lệnh EF Core Migrations để tạo và cập nhật cơ sở dữ
+    liệu.
+-   Truy vấn dữ liệu bất đồng bộ bằng LINQ kết hợp `async/await`.
+-   Đảm bảo dữ liệu được lưu trữ lâu dài trong SQL Server.
+
+### Bối cảnh thực tế
+
+Khi nhân viên thu ngân thêm hoặc sửa nhóm hàng trên phần mềm WinForms,
+dữ liệu sẽ được lưu trực tiếp vào cơ sở dữ liệu SQL Server. Sau khi tắt
+máy hoặc khởi động lại API, dữ liệu vẫn được giữ nguyên.
+
+------------------------------------------------------------------------
+
+## 2. Kiến trúc hệ thống
+
+Dự án được xây dựng theo mô hình **Client - Server**, gồm hai thành phần
+chính:
+
+### Backend - MiniSupermarket.API
+
+Ứng dụng ASP.NET Core Web API chịu trách nhiệm:
+
+-   Xử lý logic nghiệp vụ.
+-   Kết nối Microsoft SQL Server.
+-   Sử dụng Entity Framework Core để thao tác với cơ sở dữ liệu.
+-   Cung cấp RESTful API.
+-   Hỗ trợ xử lý bất đồng bộ bằng `async/await`.
+
+### Frontend - MiniSupermarket.WinForms
+
+Ứng dụng Windows Forms đóng vai trò là máy trạm tại quầy.
+
+Frontend sử dụng `HttpClient` để:
+
+-   Gọi API.
+-   Xem danh mục.
+-   Thêm danh mục.
+-   Cập nhật danh mục.
+-   Xóa danh mục.
+-   Thực hiện các chức năng quản lý dữ liệu khách hàng theo phần mở
+    rộng.
+
+------------------------------------------------------------------------
+
+## 3. Công nghệ sử dụng
+
+### Backend
+
+-   C# / .NET 8.0
+-   ASP.NET Core Web API
+-   Entity Framework Core 8.0
+-   LINQ
+-   Async/Await
+
+### Database
+
+-   Microsoft SQL Server
+-   Entity Framework Core Code-First
+-   EF Core Migrations
+
+### Frontend
+
+-   Windows Forms .NET 8.0
+-   `System.Net.Http.Json`
+-   `HttpClient`
+
+### Công cụ
+
+-   Visual Studio 2022
+-   SQL Server Management Studio (SSMS)
+-   Swagger UI
+
+------------------------------------------------------------------------
+
+## 4. Các gói NuGet cần cài đặt
+
+Trong project `MiniSupermarket.API`, cài đặt các package:
+
+``` text
+Microsoft.EntityFrameworkCore.SqlServer
+Microsoft.EntityFrameworkCore.Tools
+Microsoft.EntityFrameworkCore.Design
+```
+
+### Chức năng
+
+-   `Microsoft.EntityFrameworkCore.SqlServer`: Kết nối EF Core với SQL
+    Server.
+-   `Microsoft.EntityFrameworkCore.Tools`: Hỗ trợ các lệnh Migration.
+-   `Microsoft.EntityFrameworkCore.Design`: Hỗ trợ môi trường thiết kế
+    và sinh mã EF Core.
+
+------------------------------------------------------------------------
+
+## 5. Cấu trúc Model
+
+### Category
+
+Bảng `Categories` quản lý các nhóm hàng.
+
+Các thông tin chính:
+
+-   `CategoryId`: Khóa chính, tự tăng.
+-   `CategoryName`: Tên nhóm hàng.
+-   `Description`: Mô tả nhóm hàng.
+-   `Products`: Quan hệ một-nhiều với sản phẩm.
+
+### Product
+
+Bảng `Products` quản lý các mặt hàng trong siêu thị.
+
+Các thông tin chính:
+
+-   `ProductId`: Khóa chính, tự tăng.
+-   `Barcode`: Mã vạch sản phẩm.
+-   `ProductName`: Tên sản phẩm.
+-   `Price`: Giá bán.
+-   `StockQuantity`: Số lượng tồn kho.
+-   `CategoryId`: Khóa ngoại liên kết với `Categories`.
+
+Quan hệ:
+
+``` text
+Category 1 -------- N Product
+```
+
+Một danh mục có thể có nhiều sản phẩm.
+
+------------------------------------------------------------------------
+
+## 6. SupermarketDbContext
+
+File:
+
+``` text
+MiniSupermarket.API/Data/SupermarketDbContext.cs
+```
+
+`SupermarketDbContext` là lớp trung gian giúp ứng dụng làm việc với cơ
+sở dữ liệu SQL Server thông qua Entity Framework Core.
+
+Các bảng được ánh xạ:
+
+``` csharp
+public DbSet<Category> Categories { get; set; }
+public DbSet<Product> Products { get; set; }
+```
+
+### Data Seeding
+
+Hệ thống có sẵn 5 danh mục mẫu:
+
+    ID Tên danh mục                 Mô tả
+  ---- ---------------------------- ---------------------------------
+     1 Bánh kẹo & Đồ ăn vặt         Snack, bánh quy, kẹo dẻo
+     2 Nước giải khát & Trà         Nước ngọt, nước khoáng, trà
+     3 Sữa & Sản phẩm từ sữa        Sữa tươi, sữa chua, phô mai
+     4 Mì gói & Thực phẩm ăn liền   Mì ăn liền, phở khô, cháo gói
+     5 Gia vị & Dầu ăn              Nước mắm, hạt nêm, dầu thực vật
+
+------------------------------------------------------------------------
+
+## 7. Cấu hình SQL Server
+
+Mở file:
+
+``` text
+MiniSupermarket.API/appsettings.json
+```
+
+### Sử dụng Windows Authentication
+
+``` json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=MiniSupermarketDb;Trusted_Connection=True;TrustServerCertificate=True;"
+  }
 }
-Sử dụng Tài khoản SQL (sa):JSON"ConnectionStrings": {
-  "DefaultConnection": "Server=.;Database=TeoNguyenMiniSupermarketDb;User Id=sa;Password=123456;TrustServerCertificate=True;MultipleActiveResultSets=true;"
+```
+
+### Sử dụng tài khoản SQL Server `sa`
+
+Nếu SQL Server sử dụng tài khoản `sa`, có thể cấu hình:
+
+``` json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=.;Database=MiniSupermarketDb;User Id=sa;Password=123456;MultipleActiveResultSets=true;TrustServerCertificate=True"
+  }
 }
-Bước 2: Thực thi EF Core MigrationsMở cửa sổ Package Manager Console trong Visual Studio (Tools $\rightarrow$ NuGet Package Manager $\rightarrow$ Package Manager Console).Chọn Default project là MiniSupermarket.API.Chạy lần lượt các lệnh:PowerShellAdd-Migration InitialCreateDatabase
+```
+
+Nếu SQL Server Express được sử dụng, Server có thể đổi thành:
+
+``` text
+.\SQLEXPRESS
+```
+
+### Đặt mật khẩu cho tài khoản sa
+
+Trong SSMS, có thể thực hiện:
+
+``` sql
+ALTER LOGIN sa WITH PASSWORD = '123456';
+```
+
+------------------------------------------------------------------------
+
+## 8. Đăng ký DbContext trong Program.cs
+
+Trong `Program.cs`, đăng ký `SupermarketDbContext`:
+
+``` csharp
+using Microsoft.EntityFrameworkCore;
+using MiniSupermarket.API.Data;
+
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<SupermarketDbContext>(options =>
+    options.UseSqlServer(connectionString));
+```
+
+Sau đó ứng dụng có thể sử dụng `SupermarketDbContext` thông qua
+Dependency Injection.
+
+------------------------------------------------------------------------
+
+## 9. EF Core Migrations
+
+Mở:
+
+``` text
+Tools
+→ NuGet Package Manager
+→ Package Manager Console
+```
+
+Đảm bảo **Default project** là:
+
+``` text
+MiniSupermarket.API
+```
+
+### Tạo Migration
+
+``` powershell
+Add-Migration InitialCreateDatabase
+```
+
+### Cập nhật Database
+
+``` powershell
 Update-Database
-Lưu ý: Hệ thống sẽ tự động tạo CSDL TeoNguyenMiniSupermarketDb trên SQL Server cùng các bảng và dữ liệu mồi (Data Seeding).Bước 3: Chạy Backend (Web API)Nhấp chuột phải vào project MiniSupermarket.API chọn Set as Startup Project.Nhấn F5 để khởi chạy. Trình duyệt sẽ mở Swagger UI (https://localhost:7123/swagger).Thực hiện kiểm thử các API Categories và Customers.Bước 4: Chạy Frontend (WinForms Client)Nhấp chuột phải vào MiniSupermarket.WinForms chọn Debug $\rightarrow$ Start new instance.Đăng nhập bằng tài khoản mẫu admin / 123456 hoặc cashier / 123456.Kiểm thử các chức năng Xem, Thêm, Sửa, Xóa, Tìm kiếm khách hàng và danh mục. Tắt ứng dụng và mở lại để kiểm chứng dữ liệu đã được lưu bền vững vào SQL Server.🗺️ 7. Lộ trình Phát triển (Roadmap)[x] Buổi 1: CRUD Categories cơ bản (In-Memory)[x] Buổi 2: Bảo mật JWT Authentication + Phân quyền Admin/Cashier[x] Buổi 3: Tích hợp SQL Server + EF Core Code-First + Bài tập Mở rộng Customers[ ] Buổi 4: Phân hệ Sản phẩm (Products) & Nghiệp vụ Quản lý Kho hàng (Eager Loading với .Include())[ ] Buổi 5: Phân hệ Bán hàng POS (Orders & OrderDetails) & In hóa đơn👨‍💻 8. Thông tin Tác giảHọ và tên: Mai Chí CườngMã sinh viên: 2124110113Lớp học phần: CCQ2411D
+```
+
+EF Core sẽ dựa trên các Model và `DbContext` để tạo cấu trúc cơ sở dữ
+liệu SQL Server.
+
+------------------------------------------------------------------------
+
+## 10. CategoriesController
+
+Controller quản lý danh mục:
+
+``` text
+MiniSupermarket.API/Controllers/CategoriesController.cs
+```
+
+Các API chính:
+
+  Phương thức   Endpoint                               Chức năng
+  ------------- -------------------------------------- ----------------------
+  GET           `/api/categories`                      Lấy tất cả danh mục
+  GET           `/api/categories/{id}`                 Lấy danh mục theo ID
+  GET           `/api/categories/search?keyword=...`   Tìm kiếm danh mục
+  POST          `/api/categories`                      Thêm danh mục
+  PUT           `/api/categories/{id}`                 Cập nhật danh mục
+  DELETE        `/api/categories/{id}`                 Xóa danh mục
+
+Controller sử dụng:
+
+``` csharp
+ToListAsync()
+FindAsync()
+SaveChangesAsync()
+```
+
+để thực hiện truy vấn và cập nhật dữ liệu bất đồng bộ.
+
+------------------------------------------------------------------------
+
+## 11. Kiểm thử Backend bằng Swagger
+
+Sau khi chạy project `MiniSupermarket.API`:
+
+1.  Nhấn `F5`.
+2.  Mở Swagger UI.
+3.  Kiểm tra API:
+
+``` text
+GET /api/categories
+```
+
+4.  Thử thêm danh mục bằng:
+
+``` text
+POST /api/categories
+```
+
+5.  Kiểm tra lại dữ liệu trong SQL Server Management Studio.
+
+Dữ liệu được tạo hoặc thay đổi thông qua API sẽ được lưu vào SQL Server.
+
+------------------------------------------------------------------------
+
+## 12. Kiểm thử WinForms Client
+
+Khởi chạy:
+
+``` text
+MiniSupermarket.WinForms
+```
+
+Thực hiện các chức năng:
+
+-   Xem danh mục.
+-   Thêm danh mục.
+-   Cập nhật danh mục.
+-   Xóa danh mục.
+-   Làm việc với dữ liệu thông qua Web API.
+
+Sau khi thao tác, có thể tắt cả WinForms và Backend API rồi mở lại để
+kiểm tra tính bền vững của dữ liệu.
+
+------------------------------------------------------------------------
+
+## 13. Phân hệ Customers - Khách hàng thân thiết
+
+Phần mở rộng của Buổi 3 xây dựng phân hệ quản lý khách hàng.
+
+Bảng `Customers` dùng để lưu:
+
+-   Thông tin khách hàng.
+-   Số điện thoại.
+-   Địa chỉ.
+-   Điểm tích lũy.
+-   Hạng thành viên.
+
+### Các trường dữ liệu
+
+  Trường           Kiểu dữ liệu    Ý nghĩa
+  ---------------- --------------- ---------------------
+  CustomerId       INT             Khóa chính, tự tăng
+  CustomerName     NVARCHAR(100)   Tên khách hàng
+  PhoneNumber      VARCHAR(15)     Số điện thoại
+  Address          NVARCHAR(200)   Địa chỉ
+  RewardPoints     INT             Điểm tích lũy
+  MembershipRank   NVARCHAR(50)    Hạng thành viên
+
+### Dữ liệu mẫu
+
+Hệ thống có thể sử dụng 3 khách hàng mẫu:
+
+  Khách hàng     Số điện thoại   Hạng      Điểm
+  -------------- --------------- ------- ------
+  Nguyễn Văn A   0901122334      Vàng       150
+  Trần Thị B     0918877665      Bạc         50
+  Lê Văn C       0983344556      Chuẩn       10
+
+------------------------------------------------------------------------
+
+## 14. Customers API
+
+Các endpoint cần xây dựng:
+
+``` text
+GET    /api/customers
+GET    /api/customers/{id}
+GET    /api/customers/search?keyword=...
+POST   /api/customers
+PUT    /api/customers/{id}
+DELETE /api/customers/{id}
+```
+
+### Chức năng
+
+-   Lấy danh sách khách hàng.
+-   Xem thông tin khách hàng theo ID.
+-   Tìm kiếm theo tên hoặc số điện thoại.
+-   Thêm khách hàng.
+-   Cập nhật thông tin và hạng thành viên.
+-   Xóa khách hàng.
+
+------------------------------------------------------------------------
+
+## 15. Giao diện FormCustomerManagement
+
+Form quản lý khách hàng:
+
+``` text
+FormCustomerManagement.cs
+```
+
+Các thành phần chính:
+
+### DataGridView
+
+``` text
+dgvCustomers
+```
+
+Dùng để hiển thị danh sách khách hàng.
+
+### Ô nhập liệu
+
+``` text
+txtCustomerId
+txtCustomerName
+txtPhoneNumber
+txtAddress
+txtRewardPoints
+txtMembershipRank
+```
+
+### Các nút chức năng
+
+``` text
+btnLoad
+btnAdd
+btnUpdate
+btnDelete
+btnSearch
+```
+
+Frontend sử dụng `HttpClient` và các phương thức:
+
+``` csharp
+GetFromJsonAsync
+PostAsJsonAsync
+PutAsJsonAsync
+DeleteAsync
+```
+
+để giao tiếp với Web API.
+
+------------------------------------------------------------------------
+
+## 16. Cấu trúc thư mục dự án
+
+``` text
+MiniSupermarketSystem/
+│
+├── MiniSupermarket.API/
+│   ├── Controllers/
+│   │   ├── CategoriesController.cs
+│   │   └── CustomersController.cs
+│   │
+│   ├── Data/
+│   │   └── SupermarketDbContext.cs
+│   │
+│   ├── Migrations/
+│   │
+│   ├── Models/
+│   │   ├── Category.cs
+│   │   ├── Product.cs
+│   │   └── Customer.cs
+│   │
+│   ├── appsettings.json
+│   └── Program.cs
+│
+└── MiniSupermarket.WinForms/
+    ├── FormCategoryManagement.cs
+    ├── FormCustomerManagement.cs
+    └── ...
+```
+
+------------------------------------------------------------------------
+
+## 17. Tác giả
+
+Họ và tên: Mai Chí Cường
+MSSV:2124110113
+Lớp học phần:CCQ2411D
+Đề tài: Phát triển Ứng dụng Thu ngân và Quản lý Hàng hóa cho Mô hình Bán lẻ -- Cửa hàng Tiện lợi Alpha Mini
