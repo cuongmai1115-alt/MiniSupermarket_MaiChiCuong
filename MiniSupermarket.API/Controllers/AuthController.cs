@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MiniSupermarket.API.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -11,35 +13,44 @@ namespace MiniSupermarket.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly SupermarketDbContext _db;
 
-        public AuthController(IConfiguration configuration)
+        public AuthController(IConfiguration configuration, SupermarketDbContext db)
         {
             _configuration = configuration;
+            _db = db;
         }
 
-        // Endpoint Đăng nhập: POST /api/auth/login
+        // POST /api/auth/login  -> kiểm tra tài khoản trong bảng Users (15 tài khoản seed)
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequestDto request)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
-            // Kiểm tra tài khoản mẫu (Trong thực tế sẽ truy vấn qua EF Core / SQL Server)
-            if (request.Username == "admin" && request.Password == "123456")
-            {
-                var token = GenerateJwtToken(request.Username, "Admin");
-                return Ok(new { success = true, token = token, role = "Admin" });
-            }
-            else if (request.Username == "cashier" && request.Password == "123456")
-            {
-                var token = GenerateJwtToken(request.Username, "Cashier");
-                return Ok(new { success = true, token = token, role = "Cashier" });
-            }
+            var username = (request.Username ?? string.Empty).Trim();
 
-            return Unauthorized(new { success = false, message = "Sai tài khoản hoặc mật khẩu!" });
+            var user = await _db.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Username == username && u.Password == request.Password);
+
+            if (user == null)
+                return Unauthorized(new { success = false, message = "Sai tài khoản hoặc mật khẩu!" });
+
+            if (!user.IsActive)
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new { success = false, message = "Tài khoản đã bị khóa. Vui lòng liên hệ Admin!" });
+
+            var token = GenerateJwtToken(user.Username, user.Role);
+            return Ok(new
+            {
+                success = true,
+                token,
+                role = user.Role,
+                username = user.Username,
+                fullName = user.FullName
+            });
         }
 
         private string GenerateJwtToken(string username, string role)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            // Lấy khóa bí mật từ appsettings.json
             var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Secret"] ?? "SupermarketSecretKeyDoAnMonHoc2026SecureString!!");
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -48,7 +59,7 @@ namespace MiniSupermarket.API.Controllers
                     new Claim(ClaimTypes.Name, username),
                     new Claim(ClaimTypes.Role, role)
                 }),
-                Expires = DateTime.UtcNow.AddHours(2), // Thời hạn token là 2 tiếng
+                Expires = DateTime.UtcNow.AddHours(2),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 

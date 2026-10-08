@@ -3,6 +3,10 @@ using MiniSupermarket.API.Models;
 
 namespace MiniSupermarket.API.Data
 {
+    /// <summary>
+    /// DbContext - Cửa hàng Tiện lợi Alpha Mini
+    /// (Ứng dụng Thu ngân và Quản lý Hàng hóa cho Mô hình Bán lẻ)
+    /// </summary>
     public class SupermarketDbContext : DbContext
     {
         public SupermarketDbContext(
@@ -14,139 +18,134 @@ namespace MiniSupermarket.API.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // =========================================================
-            // 1. DANH MỤC - 15 DỮ LIỆU
+            // 1. NHÓM HÀNG - 15 DỮ LIỆU (mô hình cửa hàng tiện lợi)
             // =========================================================
             modelBuilder.Entity<Category>().HasData(
-
                 new Category
                 {
                     CategoryId = 1,
                     CategoryName = "Nước giải khát",
-                    Description = "Nước ngọt, nước khoáng, nước trái cây"
+                    Description = "Nước ngọt, nước suối, nước tăng lực, trà đóng chai"
                 },
 
                 new Category
                 {
                     CategoryId = 2,
                     CategoryName = "Sữa và sản phẩm từ sữa",
-                    Description = "Sữa tươi, sữa chua, phô mai"
+                    Description = "Sữa tươi, sữa chua, sữa hộp, phô mai"
                 },
 
                 new Category
                 {
                     CategoryId = 3,
-                    CategoryName = "Bánh kẹo",
-                    Description = "Bánh quy, bánh ngọt, kẹo các loại"
+                    CategoryName = "Bánh kẹo và snack",
+                    Description = "Bánh quy, snack khoai tây, kẹo, chocolate"
                 },
 
                 new Category
                 {
                     CategoryId = 4,
-                    CategoryName = "Mì và thực phẩm ăn liền",
-                    Description = "Mì gói, phở, cháo và thực phẩm ăn liền"
+                    CategoryName = "Mì, phở, cháo ăn liền",
+                    Description = "Mì gói, mì ly, phở và cháo ăn liền"
                 },
 
                 new Category
                 {
                     CategoryId = 5,
-                    CategoryName = "Gia vị và thực phẩm khô",
-                    Description = "Nước mắm, dầu ăn, hạt nêm, đường"
+                    CategoryName = "Cơm hộp và món ăn sẵn",
+                    Description = "Cơm hộp, cơm cuộn, xôi, món ăn hâm nóng tại quầy"
                 },
 
                 new Category
                 {
                     CategoryId = 6,
-                    CategoryName = "Đồ dùng cá nhân",
-                    Description = "Kem đánh răng, dầu gội, sữa tắm"
+                    CategoryName = "Bánh mì và bánh tươi",
+                    Description = "Bánh mì, sandwich, bánh bao, bánh ngọt trong ngày"
                 },
 
                 new Category
                 {
                     CategoryId = 7,
-                    CategoryName = "Đồ gia dụng",
-                    Description = "Đồ dùng gia đình và vật dụng sinh hoạt"
+                    CategoryName = "Kem và thực phẩm đông lạnh",
+                    Description = "Kem ốc quế, xúc xích, cá viên và món chiên đông lạnh"
                 },
 
                 new Category
                 {
                     CategoryId = 8,
-                    CategoryName = "Đồ ăn nhanh",
-                    Description = "Xúc xích, sandwich, hamburger và đồ ăn nhanh"
+                    CategoryName = "Cà phê và trà",
+                    Description = "Cà phê lon, cà phê hòa tan, trà đóng chai"
                 },
 
                 new Category
                 {
                     CategoryId = 9,
-                    CategoryName = "Thực phẩm đông lạnh",
-                    Description = "Thực phẩm đông lạnh và đồ chế biến sẵn"
+                    CategoryName = "Gia vị và thực phẩm khô",
+                    Description = "Nước mắm, dầu ăn, đường, gia vị đóng gói nhỏ"
                 },
 
                 new Category
                 {
                     CategoryId = 10,
-                    CategoryName = "Trái cây",
-                    Description = "Các loại trái cây tươi"
+                    CategoryName = "Đồ hộp và thực phẩm đóng gói",
+                    Description = "Cá hộp, pate, rong biển ăn liền, thực phẩm đóng gói"
                 },
 
                 new Category
                 {
                     CategoryId = 11,
-                    CategoryName = "Rau củ",
-                    Description = "Rau củ quả tươi"
+                    CategoryName = "Trái cây và rau củ tiện lợi",
+                    Description = "Trái cây tươi, trái cây cắt sẵn, salad đóng hộp"
                 },
 
                 new Category
                 {
                     CategoryId = 12,
-                    CategoryName = "Đồ hộp",
-                    Description = "Cá hộp, thịt hộp và thực phẩm đóng hộp"
+                    CategoryName = "Chăm sóc cá nhân",
+                    Description = "Kem đánh răng, dầu gội, sữa tắm, khăn ướt"
                 },
 
                 new Category
                 {
                     CategoryId = 13,
-                    CategoryName = "Cà phê và trà",
-                    Description = "Cà phê, trà túi lọc và trà đóng chai"
+                    CategoryName = "Đồ gia dụng và vệ sinh",
+                    Description = "Khăn giấy, túi rác, nước rửa chén, vật dụng sinh hoạt"
                 },
 
                 new Category
                 {
                     CategoryId = 14,
                     CategoryName = "Văn phòng phẩm",
-                    Description = "Bút, vở, giấy và dụng cụ học tập"
+                    Description = "Bút, vở, băng keo và dụng cụ học tập"
                 },
 
                 new Category
                 {
                     CategoryId = 15,
-                    CategoryName = "Chăm sóc nhà cửa",
-                    Description = "Nước giặt, nước rửa chén và chất tẩy rửa"
+                    CategoryName = "Phụ kiện tiện ích",
+                    Description = "Pin, cáp sạc, khẩu trang và phụ kiện dùng nhanh"
                 }
             );
 
-
             // =========================================================
-            // 2. SẢN PHẨM - 45 DỮ LIỆU
+            // 2. SẢN PHẨM - 45 DỮ LIỆU (3 sản phẩm / nhóm hàng)
             // =========================================================
             modelBuilder.Entity<Product>().HasData(
-
-                // -----------------------------------------------------
-                // DANH MỤC 1 - NƯỚC GIẢI KHÁT
-                // -----------------------------------------------------
-
+                // ----- NHÓM 1: NƯỚC GIẢI KHÁT -----
                 new Product
                 {
                     ProductId = 1,
                     Barcode = "8930000000011",
-                    ProductName = "Nước ngọt Coca Cola lon 330ml",
-                    Price = 10000m,
-                    StockQuantity = 200,
+                    ProductName = "Nước ngọt Coca-Cola lon 330ml",
+                    Price = 12000m,
+                    StockQuantity = 240,
                     CategoryId = 1
                 },
 
@@ -154,9 +153,9 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 2,
                     Barcode = "8930000000028",
-                    ProductName = "Nước ngọt Pepsi lon 330ml",
-                    Price = 10000m,
-                    StockQuantity = 180,
+                    ProductName = "Nước tăng lực Number 1 chai 330ml",
+                    Price = 11000m,
+                    StockQuantity = 150,
                     CategoryId = 1
                 },
 
@@ -164,24 +163,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 3,
                     Barcode = "8930000000035",
-                    ProductName = "Nước khoáng Lavie chai 500ml",
+                    ProductName = "Nước suối Aquafina chai 500ml",
                     Price = 6000m,
-                    StockQuantity = 250,
+                    StockQuantity = 300,
                     CategoryId = 1
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 2 - SỮA
-                // -----------------------------------------------------
-
+                // ----- NHÓM 2: SỮA VÀ SẢN PHẨM TỪ SỮA -----
                 new Product
                 {
                     ProductId = 4,
                     Barcode = "8930000000042",
-                    ProductName = "Sữa tươi Vinamilk 1L",
-                    Price = 32000m,
-                    StockQuantity = 80,
+                    ProductName = "Sữa tươi Vinamilk 100% hộp 1L",
+                    Price = 36000m,
+                    StockQuantity = 60,
                     CategoryId = 2
                 },
 
@@ -189,9 +184,9 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 5,
                     Barcode = "8930000000059",
-                    ProductName = "Sữa chua Vinamilk hộp",
-                    Price = 7000m,
-                    StockQuantity = 150,
+                    ProductName = "Sữa chua Vinamilk có đường hộp 100g",
+                    Price = 8000m,
+                    StockQuantity = 120,
                     CategoryId = 2
                 },
 
@@ -199,24 +194,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 6,
                     Barcode = "8930000000066",
-                    ProductName = "Phô mai lát 140g",
-                    Price = 38000m,
-                    StockQuantity = 60,
+                    ProductName = "Sữa tươi TH true MILK hộp 180ml",
+                    Price = 9000m,
+                    StockQuantity = 150,
                     CategoryId = 2
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 3 - BÁNH KẸO
-                // -----------------------------------------------------
-
+                // ----- NHÓM 3: BÁNH KẸO VÀ SNACK -----
                 new Product
                 {
                     ProductId = 7,
                     Barcode = "8930000000073",
-                    ProductName = "Bánh quy bơ 150g",
-                    Price = 25000m,
-                    StockQuantity = 100,
+                    ProductName = "Snack khoai tây Lay's vị tự nhiên 52g",
+                    Price = 14000m,
+                    StockQuantity = 110,
                     CategoryId = 3
                 },
 
@@ -224,8 +215,8 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 8,
                     Barcode = "8930000000080",
-                    ProductName = "Bánh xốp chocolate 120g",
-                    Price = 18000m,
+                    ProductName = "Bánh quy Oreo vani 133g",
+                    Price = 24000m,
                     StockQuantity = 90,
                     CategoryId = 3
                 },
@@ -234,22 +225,18 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 9,
                     Barcode = "8930000000097",
-                    ProductName = "Kẹo dẻo trái cây 100g",
+                    ProductName = "Chocolate KitKat 4 thanh 35g",
                     Price = 18000m,
-                    StockQuantity = 120,
+                    StockQuantity = 80,
                     CategoryId = 3
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 4 - MÌ VÀ THỰC PHẨM ĂN LIỀN
-                // -----------------------------------------------------
-
+                // ----- NHÓM 4: MÌ, PHỞ, CHÁO ĂN LIỀN -----
                 new Product
                 {
                     ProductId = 10,
                     Barcode = "8930000000103",
-                    ProductName = "Mì Hảo Hảo tôm chua cay 75g",
+                    ProductName = "Mì Hảo Hảo tôm chua cay gói 75g",
                     Price = 5000m,
                     StockQuantity = 300,
                     CategoryId = 4
@@ -259,9 +246,9 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 11,
                     Barcode = "8930000000110",
-                    ProductName = "Mì Omachi sườn hầm ngũ quả",
-                    Price = 9000m,
-                    StockQuantity = 150,
+                    ProductName = "Mì ly Modern lẩu thái 65g",
+                    Price = 12000m,
+                    StockQuantity = 140,
                     CategoryId = 4
                 },
 
@@ -269,24 +256,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 12,
                     Barcode = "8930000000127",
-                    ProductName = "Phở bò ăn liền 65g",
-                    Price = 9000m,
+                    ProductName = "Phở bò Vifon ăn liền gói 65g",
+                    Price = 11000m,
                     StockQuantity = 100,
                     CategoryId = 4
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 5 - GIA VỊ
-                // -----------------------------------------------------
-
+                // ----- NHÓM 5: CƠM HỘP VÀ MÓN ĂN SẴN -----
                 new Product
                 {
                     ProductId = 13,
                     Barcode = "8930000000134",
-                    ProductName = "Nước mắm cá cơm 500ml",
-                    Price = 45000m,
-                    StockQuantity = 70,
+                    ProductName = "Cơm hộp gà teriyaki 300g",
+                    Price = 35000m,
+                    StockQuantity = 30,
                     CategoryId = 5
                 },
 
@@ -294,9 +277,9 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 14,
                     Barcode = "8930000000141",
-                    ProductName = "Dầu ăn thực vật 1L",
-                    Price = 55000m,
-                    StockQuantity = 50,
+                    ProductName = "Cơm cuộn rong biển (kimbap) 200g",
+                    Price = 25000m,
+                    StockQuantity = 35,
                     CategoryId = 5
                 },
 
@@ -304,24 +287,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 15,
                     Barcode = "8930000000158",
-                    ProductName = "Hạt nêm thịt thăn 400g",
-                    Price = 38000m,
-                    StockQuantity = 75,
+                    ProductName = "Xôi mặn gói 150g",
+                    Price = 20000m,
+                    StockQuantity = 30,
                     CategoryId = 5
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 6 - ĐỒ DÙNG CÁ NHÂN
-                // -----------------------------------------------------
-
+                // ----- NHÓM 6: BÁNH MÌ VÀ BÁNH TƯƠI -----
                 new Product
                 {
                     ProductId = 16,
                     Barcode = "8930000000165",
-                    ProductName = "Kem đánh răng P/S 180g",
-                    Price = 32000m,
-                    StockQuantity = 70,
+                    ProductName = "Bánh mì thịt nguội",
+                    Price = 20000m,
+                    StockQuantity = 40,
                     CategoryId = 6
                 },
 
@@ -329,8 +308,8 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 17,
                     Barcode = "8930000000172",
-                    ProductName = "Dầu gội Sunsilk 650g",
-                    Price = 85000m,
+                    ProductName = "Sandwich gà phô mai",
+                    Price = 25000m,
                     StockQuantity = 40,
                     CategoryId = 6
                 },
@@ -339,24 +318,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 18,
                     Barcode = "8930000000189",
-                    ProductName = "Sữa tắm Lifebuoy 800g",
-                    Price = 90000m,
-                    StockQuantity = 45,
+                    ProductName = "Bánh bao nhân thịt trứng cút",
+                    Price = 18000m,
+                    StockQuantity = 50,
                     CategoryId = 6
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 7 - ĐỒ GIA DỤNG
-                // -----------------------------------------------------
-
+                // ----- NHÓM 7: KEM VÀ THỰC PHẨM ĐÔNG LẠNH -----
                 new Product
                 {
                     ProductId = 19,
                     Barcode = "8930000000196",
-                    ProductName = "Khăn giấy đa năng",
-                    Price = 18000m,
-                    StockQuantity = 100,
+                    ProductName = "Kem ốc quế Cornetto vị chocolate",
+                    Price = 22000m,
+                    StockQuantity = 60,
                     CategoryId = 7
                 },
 
@@ -364,9 +339,9 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 20,
                     Barcode = "8930000000202",
-                    ProductName = "Túi rác tự phân hủy",
-                    Price = 25000m,
-                    StockQuantity = 60,
+                    ProductName = "Xúc xích nướng que hâm nóng",
+                    Price = 15000m,
+                    StockQuantity = 70,
                     CategoryId = 7
                 },
 
@@ -374,24 +349,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 21,
                     Barcode = "8930000000219",
-                    ProductName = "Hộp đựng thực phẩm 1L",
-                    Price = 35000m,
-                    StockQuantity = 50,
+                    ProductName = "Cá viên chiên đông lạnh 500g",
+                    Price = 52000m,
+                    StockQuantity = 35,
                     CategoryId = 7
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 8 - ĐỒ ĂN NHANH
-                // -----------------------------------------------------
-
+                // ----- NHÓM 8: CÀ PHÊ VÀ TRÀ -----
                 new Product
                 {
                     ProductId = 22,
                     Barcode = "8930000000226",
-                    ProductName = "Xúc xích tiệt trùng 175g",
-                    Price = 28000m,
-                    StockQuantity = 90,
+                    ProductName = "Cà phê sữa NESCAFÉ lon 170ml",
+                    Price = 12000m,
+                    StockQuantity = 120,
                     CategoryId = 8
                 },
 
@@ -399,9 +370,9 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 23,
                     Barcode = "8930000000233",
-                    ProductName = "Sandwich sandwich thịt nguội",
-                    Price = 25000m,
-                    StockQuantity = 40,
+                    ProductName = "Cà phê hòa tan G7 3in1 hộp 16 gói",
+                    Price = 48000m,
+                    StockQuantity = 70,
                     CategoryId = 8
                 },
 
@@ -409,24 +380,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 24,
                     Barcode = "8930000000240",
-                    ProductName = "Bánh bao nhân thịt",
-                    Price = 15000m,
-                    StockQuantity = 60,
+                    ProductName = "Trà xanh Không Độ chai 455ml",
+                    Price = 11000m,
+                    StockQuantity = 130,
                     CategoryId = 8
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 9 - THỰC PHẨM ĐÔNG LẠNH
-                // -----------------------------------------------------
-
+                // ----- NHÓM 9: GIA VỊ VÀ THỰC PHẨM KHÔ -----
                 new Product
                 {
                     ProductId = 25,
                     Barcode = "8930000000257",
-                    ProductName = "Cá viên chiên đông lạnh 500g",
+                    ProductName = "Nước mắm Nam Ngư chai 500ml",
                     Price = 45000m,
-                    StockQuantity = 40,
+                    StockQuantity = 60,
                     CategoryId = 9
                 },
 
@@ -434,9 +401,9 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 26,
                     Barcode = "8930000000264",
-                    ProductName = "Xúc xích Đức đông lạnh 500g",
-                    Price = 65000m,
-                    StockQuantity = 35,
+                    ProductName = "Dầu ăn Neptune 1L",
+                    Price = 58000m,
+                    StockQuantity = 50,
                     CategoryId = 9
                 },
 
@@ -444,24 +411,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 27,
                     Barcode = "8930000000271",
-                    ProductName = "Há cảo đông lạnh 300g",
-                    Price = 55000m,
-                    StockQuantity = 30,
+                    ProductName = "Đường tinh luyện 1kg",
+                    Price = 26000m,
+                    StockQuantity = 60,
                     CategoryId = 9
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 10 - TRÁI CÂY
-                // -----------------------------------------------------
-
+                // ----- NHÓM 10: ĐỒ HỘP VÀ THỰC PHẨM ĐÓNG GÓI -----
                 new Product
                 {
                     ProductId = 28,
                     Barcode = "8930000000288",
-                    ProductName = "Táo Fuji nhập khẩu 1kg",
-                    Price = 65000m,
-                    StockQuantity = 30,
+                    ProductName = "Cá ngừ ngâm dầu Hạ Long 185g",
+                    Price = 35000m,
+                    StockQuantity = 60,
                     CategoryId = 10
                 },
 
@@ -469,9 +432,9 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 29,
                     Barcode = "8930000000295",
-                    ProductName = "Chuối tiêu 1kg",
+                    ProductName = "Pate gan Hạ Long hộp 150g",
                     Price = 30000m,
-                    StockQuantity = 40,
+                    StockQuantity = 50,
                     CategoryId = 10
                 },
 
@@ -479,24 +442,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 30,
                     Barcode = "8930000000301",
-                    ProductName = "Cam vàng 1kg",
-                    Price = 55000m,
-                    StockQuantity = 35,
+                    ProductName = "Rong biển sấy giòn ăn liền 5g",
+                    Price = 8000m,
+                    StockQuantity = 120,
                     CategoryId = 10
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 11 - RAU CỦ
-                // -----------------------------------------------------
-
+                // ----- NHÓM 11: TRÁI CÂY VÀ RAU CỦ TIỆN LỢI -----
                 new Product
                 {
                     ProductId = 31,
                     Barcode = "8930000000318",
-                    ProductName = "Cà rốt Đà Lạt 500g",
-                    Price = 18000m,
-                    StockQuantity = 50,
+                    ProductName = "Chuối tiêu 1kg",
+                    Price = 32000m,
+                    StockQuantity = 40,
                     CategoryId = 11
                 },
 
@@ -504,9 +463,9 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 32,
                     Barcode = "8930000000325",
-                    ProductName = "Khoai tây 1kg",
-                    Price = 28000m,
-                    StockQuantity = 45,
+                    ProductName = "Trái cây cắt sẵn hộp 250g",
+                    Price = 30000m,
+                    StockQuantity = 30,
                     CategoryId = 11
                 },
 
@@ -514,24 +473,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 33,
                     Barcode = "8930000000332",
-                    ProductName = "Rau cải xanh 500g",
-                    Price = 15000m,
-                    StockQuantity = 40,
+                    ProductName = "Salad rau trộn hộp 200g",
+                    Price = 28000m,
+                    StockQuantity = 25,
                     CategoryId = 11
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 12 - ĐỒ HỘP
-                // -----------------------------------------------------
-
+                // ----- NHÓM 12: CHĂM SÓC CÁ NHÂN -----
                 new Product
                 {
                     ProductId = 34,
                     Barcode = "8930000000349",
-                    ProductName = "Cá ngừ đóng hộp 185g",
-                    Price = 32000m,
-                    StockQuantity = 60,
+                    ProductName = "Kem đánh răng P/S 180g",
+                    Price = 34000m,
+                    StockQuantity = 70,
                     CategoryId = 12
                 },
 
@@ -539,8 +494,8 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 35,
                     Barcode = "8930000000356",
-                    ProductName = "Thịt heo hầm đóng hộp 150g",
-                    Price = 35000m,
+                    ProductName = "Dầu gội Sunsilk chai 170g",
+                    Price = 38000m,
                     StockQuantity = 50,
                     CategoryId = 12
                 },
@@ -549,24 +504,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 36,
                     Barcode = "8930000000363",
-                    ProductName = "Đậu Hà Lan đóng hộp 400g",
-                    Price = 28000m,
-                    StockQuantity = 45,
+                    ProductName = "Khăn ướt Mama gói 20 tờ",
+                    Price = 15000m,
+                    StockQuantity = 90,
                     CategoryId = 12
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 13 - CÀ PHÊ VÀ TRÀ
-                // -----------------------------------------------------
-
+                // ----- NHÓM 13: ĐỒ GIA DỤNG VÀ VỆ SINH -----
                 new Product
                 {
                     ProductId = 37,
                     Barcode = "8930000000370",
-                    ProductName = "Cà phê hòa tan 3in1",
-                    Price = 45000m,
-                    StockQuantity = 80,
+                    ProductName = "Khăn giấy rút Pulppy 100 tờ",
+                    Price = 22000m,
+                    StockQuantity = 100,
                     CategoryId = 13
                 },
 
@@ -574,9 +525,9 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 38,
                     Barcode = "8930000000387",
-                    ProductName = "Cà phê rang xay 250g",
-                    Price = 65000m,
-                    StockQuantity = 50,
+                    ProductName = "Nước rửa chén Sunlight chai 750ml",
+                    Price = 38000m,
+                    StockQuantity = 60,
                     CategoryId = 13
                 },
 
@@ -584,22 +535,18 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 39,
                     Barcode = "8930000000394",
-                    ProductName = "Trà túi lọc 25 gói",
-                    Price = 38000m,
-                    StockQuantity = 70,
+                    ProductName = "Túi rác đen tự hủy cuộn 1kg",
+                    Price = 25000m,
+                    StockQuantity = 60,
                     CategoryId = 13
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 14 - VĂN PHÒNG PHẨM
-                // -----------------------------------------------------
-
+                // ----- NHÓM 14: VĂN PHÒNG PHẨM -----
                 new Product
                 {
                     ProductId = 40,
                     Barcode = "8930000000400",
-                    ProductName = "Bút bi xanh Thiên Long",
+                    ProductName = "Bút bi Thiên Long TL-027 xanh",
                     Price = 5000m,
                     StockQuantity = 200,
                     CategoryId = 14
@@ -609,8 +556,8 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 41,
                     Barcode = "8930000000417",
-                    ProductName = "Vở học sinh 200 trang",
-                    Price = 18000m,
+                    ProductName = "Vở Campus 96 trang",
+                    Price = 14000m,
                     StockQuantity = 100,
                     CategoryId = 14
                 },
@@ -619,24 +566,20 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 42,
                     Barcode = "8930000000424",
-                    ProductName = "Bút chì HB",
-                    Price = 4000m,
-                    StockQuantity = 150,
+                    ProductName = "Băng keo trong 2.4cm",
+                    Price = 8000m,
+                    StockQuantity = 120,
                     CategoryId = 14
                 },
 
-
-                // -----------------------------------------------------
-                // DANH MỤC 15 - CHĂM SÓC NHÀ CỬA
-                // -----------------------------------------------------
-
+                // ----- NHÓM 15: PHỤ KIỆN TIỆN ÍCH -----
                 new Product
                 {
                     ProductId = 43,
                     Barcode = "8930000000431",
-                    ProductName = "Nước rửa chén Sunlight 750ml",
-                    Price = 32000m,
-                    StockQuantity = 70,
+                    ProductName = "Pin AA Panasonic vỉ 2 viên",
+                    Price = 28000m,
+                    StockQuantity = 80,
                     CategoryId = 15
                 },
 
@@ -644,8 +587,8 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 44,
                     Barcode = "8930000000448",
-                    ProductName = "Nước giặt OMO 2.6kg",
-                    Price = 125000m,
+                    ProductName = "Cáp sạc USB-C 1m",
+                    Price = 69000m,
                     StockQuantity = 40,
                     CategoryId = 15
                 },
@@ -654,13 +597,12 @@ namespace MiniSupermarket.API.Data
                 {
                     ProductId = 45,
                     Barcode = "8930000000455",
-                    ProductName = "Nước lau sàn 1L",
-                    Price = 45000m,
-                    StockQuantity = 50,
+                    ProductName = "Khẩu trang y tế 4 lớp hộp 10 cái",
+                    Price = 18000m,
+                    StockQuantity = 100,
                     CategoryId = 15
                 }
             );
-
 
             // =========================================================
             // 3. CẤU HÌNH KHÁCH HÀNG
@@ -674,18 +616,18 @@ namespace MiniSupermarket.API.Data
                     .HasDefaultValue("Chuẩn");
             });
 
-
             // =========================================================
-            // 4. KHÁCH HÀNG - 20 DỮ LIỆU
+            // 4. KHÁCH HÀNG THÀNH VIÊN - 20 DỮ LIỆU
+            //    Địa chỉ theo đơn vị hành chính hiện hành (từ 01/07/2025):
+            //    không còn cấp Quận/Huyện, ghi: số nhà, đường, Phường, TP. Hồ Chí Minh
             // =========================================================
             modelBuilder.Entity<Customer>().HasData(
-
                 new Customer
                 {
                     CustomerId = 1,
                     CustomerName = "Nguyễn Văn An",
                     PhoneNumber = "0901000001",
-                    Address = "12 Nguyễn Huệ, Quận 1, TP.HCM",
+                    Address = "18 Nguyễn Huệ, Phường Sài Gòn, TP. Hồ Chí Minh",
                     MembershipRank = "Vàng",
                     RewardPoints = 850
                 },
@@ -695,7 +637,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 2,
                     CustomerName = "Trần Thị Bình",
                     PhoneNumber = "0901000002",
-                    Address = "25 Lê Lợi, Quận 1, TP.HCM",
+                    Address = "45 Lê Thánh Tôn, Phường Sài Gòn, TP. Hồ Chí Minh",
                     MembershipRank = "Bạc",
                     RewardPoints = 420
                 },
@@ -705,7 +647,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 3,
                     CustomerName = "Lê Văn Cường",
                     PhoneNumber = "0901000003",
-                    Address = "38 Điện Biên Phủ, Bình Thạnh, TP.HCM",
+                    Address = "120 Phạm Ngũ Lão, Phường Bến Thành, TP. Hồ Chí Minh",
                     MembershipRank = "Chuẩn",
                     RewardPoints = 120
                 },
@@ -715,7 +657,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 4,
                     CustomerName = "Phạm Thị Dung",
                     PhoneNumber = "0901000004",
-                    Address = "45 Nguyễn Thị Minh Khai, Quận 3, TP.HCM",
+                    Address = "62 Bùi Viện, Phường Bến Thành, TP. Hồ Chí Minh",
                     MembershipRank = "Vàng",
                     RewardPoints = 720
                 },
@@ -725,7 +667,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 5,
                     CustomerName = "Hoàng Văn Đức",
                     PhoneNumber = "0901000005",
-                    Address = "56 Xô Viết Nghệ Tĩnh, Bình Thạnh, TP.HCM",
+                    Address = "160 Nguyễn Trãi, Phường Bến Thành, TP. Hồ Chí Minh",
                     MembershipRank = "Bạc",
                     RewardPoints = 350
                 },
@@ -735,7 +677,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 6,
                     CustomerName = "Võ Thị Hạnh",
                     PhoneNumber = "0901000006",
-                    Address = "67 Cách Mạng Tháng 8, Quận 10, TP.HCM",
+                    Address = "75 Nguyễn Thái Học, Phường Cầu Ông Lãnh, TP. Hồ Chí Minh",
                     MembershipRank = "Chuẩn",
                     RewardPoints = 90
                 },
@@ -745,7 +687,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 7,
                     CustomerName = "Đặng Minh Hoàng",
                     PhoneNumber = "0901000007",
-                    Address = "78 Phan Văn Trị, Gò Vấp, TP.HCM",
+                    Address = "30 Cô Giang, Phường Cầu Ông Lãnh, TP. Hồ Chí Minh",
                     MembershipRank = "Bạc",
                     RewardPoints = 480
                 },
@@ -755,7 +697,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 8,
                     CustomerName = "Bùi Thị Lan",
                     PhoneNumber = "0901000008",
-                    Address = "89 Quang Trung, Gò Vấp, TP.HCM",
+                    Address = "27 Trần Quang Khải, Phường Tân Định, TP. Hồ Chí Minh",
                     MembershipRank = "Vàng",
                     RewardPoints = 920
                 },
@@ -765,7 +707,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 9,
                     CustomerName = "Ngô Văn Minh",
                     PhoneNumber = "0901000009",
-                    Address = "91 Lạc Long Quân, Tân Bình, TP.HCM",
+                    Address = "95 Nguyễn Văn Nguyễn, Phường Tân Định, TP. Hồ Chí Minh",
                     MembershipRank = "Chuẩn",
                     RewardPoints = 160
                 },
@@ -775,7 +717,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 10,
                     CustomerName = "Đỗ Thị Ngọc",
                     PhoneNumber = "0901000010",
-                    Address = "102 Hoàng Văn Thụ, Tân Bình, TP.HCM",
+                    Address = "38 Tôn Thất Thuyết, Phường Vĩnh Hội, TP. Hồ Chí Minh",
                     MembershipRank = "Bạc",
                     RewardPoints = 390
                 },
@@ -785,7 +727,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 11,
                     CustomerName = "Phan Văn Phúc",
                     PhoneNumber = "0901000011",
-                    Address = "115 Âu Cơ, Tân Phú, TP.HCM",
+                    Address = "220 Hoàng Diệu, Phường Khánh Hội, TP. Hồ Chí Minh",
                     MembershipRank = "Chuẩn",
                     RewardPoints = 75
                 },
@@ -795,7 +737,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 12,
                     CustomerName = "Nguyễn Thị Quỳnh",
                     PhoneNumber = "0901000012",
-                    Address = "126 Tân Kỳ Tân Quý, Tân Phú, TP.HCM",
+                    Address = "346 Quang Trung, Phường Gò Vấp, TP. Hồ Chí Minh",
                     MembershipRank = "Vàng",
                     RewardPoints = 780
                 },
@@ -805,7 +747,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 13,
                     CustomerName = "Trương Văn Sơn",
                     PhoneNumber = "0901000013",
-                    Address = "137 Nguyễn Oanh, Gò Vấp, TP.HCM",
+                    Address = "88 Võ Văn Ngân, Phường Thủ Đức, TP. Hồ Chí Minh",
                     MembershipRank = "Bạc",
                     RewardPoints = 510
                 },
@@ -815,7 +757,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 14,
                     CustomerName = "Lý Thị Thảo",
                     PhoneNumber = "0901000014",
-                    Address = "148 Phạm Văn Đồng, Thủ Đức, TP.HCM",
+                    Address = "15 Lê Văn Thọ, Phường Thông Tây Hội, TP. Hồ Chí Minh",
                     MembershipRank = "Chuẩn",
                     RewardPoints = 210
                 },
@@ -825,7 +767,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 15,
                     CustomerName = "Mai Văn Thành",
                     PhoneNumber = "0901000015",
-                    Address = "159 Võ Văn Ngân, Thủ Đức, TP.HCM",
+                    Address = "212 Nguyễn Hữu Cảnh, Phường Thạnh Mỹ Tây, TP. Hồ Chí Minh",
                     MembershipRank = "Bạc",
                     RewardPoints = 440
                 },
@@ -835,7 +777,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 16,
                     CustomerName = "Huỳnh Thị Uyên",
                     PhoneNumber = "0901000016",
-                    Address = "162 Kha Vạn Cân, Thủ Đức, TP.HCM",
+                    Address = "85 Xô Viết Nghệ Tĩnh, Phường Thạnh Mỹ Tây, TP. Hồ Chí Minh",
                     MembershipRank = "Vàng",
                     RewardPoints = 1100
                 },
@@ -845,7 +787,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 17,
                     CustomerName = "Dương Văn Việt",
                     PhoneNumber = "0901000017",
-                    Address = "173 Nguyễn Văn Luông, Quận 6, TP.HCM",
+                    Address = "40 Phan Xích Long, Phường Cầu Kiệu, TP. Hồ Chí Minh",
                     MembershipRank = "Chuẩn",
                     RewardPoints = 130
                 },
@@ -855,7 +797,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 18,
                     CustomerName = "Phan Thị Xuân",
                     PhoneNumber = "0901000018",
-                    Address = "184 Hậu Giang, Quận 6, TP.HCM",
+                    Address = "150 Hoàng Văn Thụ, Phường Tân Sơn Nhất, TP. Hồ Chí Minh",
                     MembershipRank = "Bạc",
                     RewardPoints = 560
                 },
@@ -865,7 +807,7 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 19,
                     CustomerName = "Nguyễn Quốc Anh",
                     PhoneNumber = "0901000019",
-                    Address = "195 Kinh Dương Vương, Bình Tân, TP.HCM",
+                    Address = "55 Huỳnh Tấn Phát, Phường Tân Thuận, TP. Hồ Chí Minh",
                     MembershipRank = "Chuẩn",
                     RewardPoints = 180
                 },
@@ -875,11 +817,33 @@ namespace MiniSupermarket.API.Data
                     CustomerId = 20,
                     CustomerName = "Trần Minh Khoa",
                     PhoneNumber = "0901000020",
-                    Address = "206 Tỉnh Lộ 10, Bình Tân, TP.HCM",
+                    Address = "120 Lê Văn Việt, Phường Tăng Nhơn Phú, TP. Hồ Chí Minh",
                     MembershipRank = "Vàng",
                     RewardPoints = 950
                 }
             );
+            modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
+            modelBuilder.Entity<User>().Property(u => u.Username).HasMaxLength(50);
+            modelBuilder.Entity<User>().Property(u => u.Role).HasMaxLength(20);
+
+            modelBuilder.Entity<User>().HasData(
+                new User { Id = 1, Username = "admin01", Password = "123456", FullName = "Nguyễn Quản Trị", Role = "Admin", IsActive = true },
+                new User { Id = 2, Username = "admin02", Password = "123456", FullName = "Trần Giám Đốc", Role = "Admin", IsActive = true },
+                new User { Id = 3, Username = "cashier01", Password = "123456", FullName = "Lê Thu Ngân", Role = "Cashier", IsActive = true },
+                new User { Id = 4, Username = "cashier02", Password = "123456", FullName = "Phạm Bán Hàng", Role = "Cashier", IsActive = true },
+                new User { Id = 5, Username = "cashier03", Password = "123456", FullName = "Hoàng Thu Ngân", Role = "Cashier", IsActive = true },
+                new User { Id = 6, Username = "cashier04", Password = "123456", FullName = "Vũ Thị Quầy", Role = "Cashier", IsActive = true },
+                new User { Id = 7, Username = "cashier05", Password = "123456", FullName = "Đỗ Bán Lẻ", Role = "Cashier", IsActive = true },
+                new User { Id = 8, Username = "ware01", Password = "123456", FullName = "Ngô Quản Kho", Role = "Warehouse", IsActive = true },
+                new User { Id = 9, Username = "ware02", Password = "123456", FullName = "Bùi Kiểm Kê", Role = "Warehouse", IsActive = true },
+                new User { Id = 10, Username = "ware03", Password = "123456", FullName = "Dương Thủ Kho", Role = "Warehouse", IsActive = true },
+                new User { Id = 11, Username = "ware04", Password = "123456", FullName = "Lý Nhập Hàng", Role = "Warehouse", IsActive = true },
+                new User { Id = 12, Username = "admin_backup", Password = "123456", FullName = "Đặng Hỗ Trợ", Role = "Admin", IsActive = true },
+                new User { Id = 13, Username = "cashier06", Password = "123456", FullName = "Hồ Ca Chiều", Role = "Cashier", IsActive = true },
+                new User { Id = 14, Username = "ware05", Password = "123456", FullName = "Trương Vận Chuyển", Role = "Warehouse", IsActive = true },
+                new User { Id = 15, Username = "supervisor", Password = "123456", FullName = "Mai Giám Sát", Role = "Admin", IsActive = true }
+            );
+
         }
     }
 }

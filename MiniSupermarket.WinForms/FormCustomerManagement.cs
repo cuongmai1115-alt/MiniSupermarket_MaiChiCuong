@@ -6,7 +6,7 @@ namespace MiniSupermarket.WinForms
     public partial class FormCustomerManagement : Form
     {
         // Địa chỉ Base URL tới API của bạn (thay đổi port nếu cần)
-        private const string BaseApiUrl = "https://localhost:7123/api/";
+        private const string BaseApiUrl = "https://localhost:7132/api/";
 
         public FormCustomerManagement()
         {
@@ -256,6 +256,11 @@ namespace MiniSupermarket.WinForms
             txtAddress.Text = "";
             txtRewardPoints.Text = "";
             txtMembershipRank.Text = "";
+        }
+
+        private void dgvCustomers_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
         }
     }
 

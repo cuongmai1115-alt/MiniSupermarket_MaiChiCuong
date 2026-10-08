@@ -43,30 +43,38 @@
             // lblKeyword
             // 
             lblKeyword.AutoSize = true;
-            lblKeyword.Location = new Point(20, 18);
+            lblKeyword.Location = new Point(18, 14);
             lblKeyword.Name = "lblKeyword";
+            lblKeyword.Size = new Size(52, 15);
+            lblKeyword.TabIndex = 0;
             lblKeyword.Text = "Từ khóa:";
             // 
             // txtKeyword
             // 
-            txtKeyword.Location = new Point(90, 14);
+            txtKeyword.Location = new Point(79, 10);
+            txtKeyword.Margin = new Padding(3, 2, 3, 2);
             txtKeyword.Name = "txtKeyword";
-            txtKeyword.Size = new Size(250, 27);
+            txtKeyword.Size = new Size(219, 23);
+            txtKeyword.TabIndex = 1;
             // 
             // btnSearch
             // 
-            btnSearch.Location = new Point(350, 12);
+            btnSearch.Location = new Point(306, 9);
+            btnSearch.Margin = new Padding(3, 2, 3, 2);
             btnSearch.Name = "btnSearch";
-            btnSearch.Size = new Size(110, 31);
+            btnSearch.Size = new Size(96, 23);
+            btnSearch.TabIndex = 2;
             btnSearch.Text = "Tìm kiếm";
             btnSearch.UseVisualStyleBackColor = true;
             btnSearch.Click += btnSearch_Click;
             // 
             // btnLoad
             // 
-            btnLoad.Location = new Point(470, 12);
+            btnLoad.Location = new Point(411, 9);
+            btnLoad.Margin = new Padding(3, 2, 3, 2);
             btnLoad.Name = "btnLoad";
-            btnLoad.Size = new Size(110, 31);
+            btnLoad.Size = new Size(96, 23);
+            btnLoad.TabIndex = 3;
             btnLoad.Text = "Tải lại";
             btnLoad.UseVisualStyleBackColor = true;
             btnLoad.Click += btnLoad_Click;
@@ -78,94 +86,141 @@
             dgvCustomers.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dgvCustomers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvCustomers.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvCustomers.Location = new Point(20, 55);
+            dgvCustomers.Location = new Point(18, 41);
+            dgvCustomers.Margin = new Padding(3, 2, 3, 2);
             dgvCustomers.MultiSelect = false;
             dgvCustomers.Name = "dgvCustomers";
             dgvCustomers.ReadOnly = true;
             dgvCustomers.RowHeadersWidth = 51;
             dgvCustomers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvCustomers.Size = new Size(840, 260);
+            dgvCustomers.Size = new Size(735, 195);
+            dgvCustomers.TabIndex = 4;
             dgvCustomers.CellClick += dgvCustomers_CellClick;
+            dgvCustomers.CellContentClick += dgvCustomers_CellContentClick;
             // 
-            // lblCustomerId / txtCustomerId
+            // lblCustomerId
             // 
-            lblCustomerId.AutoSize = true;
             lblCustomerId.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            lblCustomerId.Location = new Point(20, 338);
+            lblCustomerId.AutoSize = true;
+            lblCustomerId.Location = new Point(18, 254);
             lblCustomerId.Name = "lblCustomerId";
+            lblCustomerId.Size = new Size(46, 15);
+            lblCustomerId.TabIndex = 5;
             lblCustomerId.Text = "Mã KH:";
+            // 
+            // txtCustomerId
+            // 
             txtCustomerId.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            txtCustomerId.Location = new Point(140, 334);
+            txtCustomerId.Location = new Point(122, 250);
+            txtCustomerId.Margin = new Padding(3, 2, 3, 2);
             txtCustomerId.Name = "txtCustomerId";
             txtCustomerId.ReadOnly = true;
-            txtCustomerId.Size = new Size(250, 27);
+            txtCustomerId.Size = new Size(219, 23);
+            txtCustomerId.TabIndex = 6;
             // 
-            // lblCustomerName / txtCustomerName
+            // lblCustomerName
             // 
-            lblCustomerName.AutoSize = true;
             lblCustomerName.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            lblCustomerName.Location = new Point(20, 378);
+            lblCustomerName.AutoSize = true;
+            lblCustomerName.Location = new Point(18, 284);
             lblCustomerName.Name = "lblCustomerName";
+            lblCustomerName.Size = new Size(93, 15);
+            lblCustomerName.TabIndex = 7;
             lblCustomerName.Text = "Tên khách hàng:";
+            // 
+            // txtCustomerName
+            // 
             txtCustomerName.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            txtCustomerName.Location = new Point(140, 374);
+            txtCustomerName.Location = new Point(122, 280);
+            txtCustomerName.Margin = new Padding(3, 2, 3, 2);
             txtCustomerName.Name = "txtCustomerName";
-            txtCustomerName.Size = new Size(250, 27);
+            txtCustomerName.Size = new Size(219, 23);
+            txtCustomerName.TabIndex = 8;
             // 
-            // lblPhoneNumber / txtPhoneNumber
+            // lblPhoneNumber
             // 
-            lblPhoneNumber.AutoSize = true;
             lblPhoneNumber.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            lblPhoneNumber.Location = new Point(20, 418);
+            lblPhoneNumber.AutoSize = true;
+            lblPhoneNumber.Location = new Point(18, 314);
             lblPhoneNumber.Name = "lblPhoneNumber";
+            lblPhoneNumber.Size = new Size(79, 15);
+            lblPhoneNumber.TabIndex = 9;
             lblPhoneNumber.Text = "Số điện thoại:";
+            // 
+            // txtPhoneNumber
+            // 
             txtPhoneNumber.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            txtPhoneNumber.Location = new Point(140, 414);
+            txtPhoneNumber.Location = new Point(122, 310);
+            txtPhoneNumber.Margin = new Padding(3, 2, 3, 2);
             txtPhoneNumber.Name = "txtPhoneNumber";
-            txtPhoneNumber.Size = new Size(250, 27);
+            txtPhoneNumber.Size = new Size(219, 23);
+            txtPhoneNumber.TabIndex = 10;
             // 
-            // lblAddress / txtAddress
+            // lblAddress
             // 
-            lblAddress.AutoSize = true;
             lblAddress.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            lblAddress.Location = new Point(430, 338);
+            lblAddress.AutoSize = true;
+            lblAddress.Location = new Point(376, 254);
             lblAddress.Name = "lblAddress";
+            lblAddress.Size = new Size(46, 15);
+            lblAddress.TabIndex = 11;
             lblAddress.Text = "Địa chỉ:";
+            // 
+            // txtAddress
+            // 
             txtAddress.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            txtAddress.Location = new Point(550, 334);
+            txtAddress.Location = new Point(481, 250);
+            txtAddress.Margin = new Padding(3, 2, 3, 2);
             txtAddress.Name = "txtAddress";
-            txtAddress.Size = new Size(300, 27);
+            txtAddress.Size = new Size(263, 23);
+            txtAddress.TabIndex = 12;
             // 
-            // lblRewardPoints / txtRewardPoints
+            // lblRewardPoints
             // 
-            lblRewardPoints.AutoSize = true;
             lblRewardPoints.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            lblRewardPoints.Location = new Point(430, 378);
+            lblRewardPoints.AutoSize = true;
+            lblRewardPoints.Location = new Point(376, 284);
             lblRewardPoints.Name = "lblRewardPoints";
+            lblRewardPoints.Size = new Size(80, 15);
+            lblRewardPoints.TabIndex = 13;
             lblRewardPoints.Text = "Điểm thưởng:";
+            // 
+            // txtRewardPoints
+            // 
             txtRewardPoints.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            txtRewardPoints.Location = new Point(550, 374);
+            txtRewardPoints.Location = new Point(481, 280);
+            txtRewardPoints.Margin = new Padding(3, 2, 3, 2);
             txtRewardPoints.Name = "txtRewardPoints";
-            txtRewardPoints.Size = new Size(300, 27);
+            txtRewardPoints.Size = new Size(263, 23);
+            txtRewardPoints.TabIndex = 14;
             // 
-            // lblMembershipRank / txtMembershipRank
+            // lblMembershipRank
             // 
-            lblMembershipRank.AutoSize = true;
             lblMembershipRank.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            lblMembershipRank.Location = new Point(430, 418);
+            lblMembershipRank.AutoSize = true;
+            lblMembershipRank.Location = new Point(376, 314);
             lblMembershipRank.Name = "lblMembershipRank";
+            lblMembershipRank.Size = new Size(59, 15);
+            lblMembershipRank.TabIndex = 15;
             lblMembershipRank.Text = "Hạng thẻ:";
+            // 
+            // txtMembershipRank
+            // 
             txtMembershipRank.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            txtMembershipRank.Location = new Point(550, 414);
+            txtMembershipRank.Location = new Point(481, 310);
+            txtMembershipRank.Margin = new Padding(3, 2, 3, 2);
             txtMembershipRank.Name = "txtMembershipRank";
-            txtMembershipRank.Size = new Size(300, 27);
+            txtMembershipRank.Size = new Size(263, 23);
+            txtMembershipRank.TabIndex = 16;
             // 
             // btnAdd
             // 
             btnAdd.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            btnAdd.Location = new Point(140, 470);
+            btnAdd.Location = new Point(122, 352);
+            btnAdd.Margin = new Padding(3, 2, 3, 2);
             btnAdd.Name = "btnAdd";
-            btnAdd.Size = new Size(120, 36);
+            btnAdd.Size = new Size(105, 27);
+            btnAdd.TabIndex = 17;
             btnAdd.Text = "Thêm mới";
             btnAdd.UseVisualStyleBackColor = true;
             btnAdd.Click += btnAdd_Click;
@@ -173,9 +228,11 @@
             // btnUpdate
             // 
             btnUpdate.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            btnUpdate.Location = new Point(280, 470);
+            btnUpdate.Location = new Point(245, 352);
+            btnUpdate.Margin = new Padding(3, 2, 3, 2);
             btnUpdate.Name = "btnUpdate";
-            btnUpdate.Size = new Size(120, 36);
+            btnUpdate.Size = new Size(105, 27);
+            btnUpdate.TabIndex = 18;
             btnUpdate.Text = "Cập nhật";
             btnUpdate.UseVisualStyleBackColor = true;
             btnUpdate.Click += btnUpdate_Click;
@@ -183,18 +240,20 @@
             // btnDelete
             // 
             btnDelete.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            btnDelete.Location = new Point(420, 470);
+            btnDelete.Location = new Point(368, 352);
+            btnDelete.Margin = new Padding(3, 2, 3, 2);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(120, 36);
+            btnDelete.Size = new Size(105, 27);
+            btnDelete.TabIndex = 19;
             btnDelete.Text = "Xóa";
             btnDelete.UseVisualStyleBackColor = true;
             btnDelete.Click += btnDelete_Click;
             // 
             // FormCustomerManagement
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(884, 531);
+            ClientSize = new Size(774, 398);
             Controls.Add(lblKeyword);
             Controls.Add(txtKeyword);
             Controls.Add(btnSearch);
@@ -215,6 +274,7 @@
             Controls.Add(btnAdd);
             Controls.Add(btnUpdate);
             Controls.Add(btnDelete);
+            Margin = new Padding(3, 2, 3, 2);
             Name = "FormCustomerManagement";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Quản lý khách hàng";
