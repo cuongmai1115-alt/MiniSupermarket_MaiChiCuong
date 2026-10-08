@@ -494,8 +494,7 @@ MiniSupermarketSystem/
 ------------------------------------------------------------------------
 
 ## 17. Tác giả
-
+Đề tài: Phát triển Ứng dụng Thu ngân và Quản lý Hàng hóa cho Mô hình Bán lẻ -- Cửa hàng Tiện lợi Alpha Mini
 Họ và tên: Mai Chí Cường
 MSSV:2124110113
 Lớp học phần:CCQ2411D
-Đề tài: Phát triển Ứng dụng Thu ngân và Quản lý Hàng hóa cho Mô hình Bán lẻ -- Cửa hàng Tiện lợi Alpha Mini
