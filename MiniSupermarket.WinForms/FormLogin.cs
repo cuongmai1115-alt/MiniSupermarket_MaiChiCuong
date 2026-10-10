@@ -1,78 +1,67 @@
-﻿using System.Net.Http.Json;
-using System.Text.Json;
-
-namespace MiniSupermarket.WinForms
+﻿namespace MiniSupermarket.WinForms
 {
     public partial class FormLogin : Form
     {
-
-        // Khởi tạo HttpClient trỏ đến địa chỉ của Web API Backend
-        private static readonly HttpClient _client = new HttpClient
-        {
-            BaseAddress = new Uri("https://localhost:7132/api/")
-        };
-
         public FormLogin()
         {
             InitializeComponent();
+            AcceptButton = btnLogin;              // nhấn Enter = Đăng nhập
+            txtPass.UseSystemPasswordChar = true; // ẩn mật khẩu
         }
 
-        // Sự kiện khi người dùng bấm nút Đăng nhập
         private async void btnLogin_Click(object sender, EventArgs e)
         {
             string username = txtUser.Text.Trim();
             string password = txtPass.Text.Trim();
 
-            // Kiểm tra ràng buộc cơ bản phía Client
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
                 MessageBox.Show("Vui lòng nhập đầy đủ tài khoản và mật khẩu!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
+            btnLogin.Enabled = false;
             try
             {
-                // Đóng gói dữ liệu gửi lên endpoint POST /api/auth/login
-                var loginData = new { Username = username, Password = password };
-                var response = await _client.PostAsJsonAsync("auth/login", loginData);
-
-                if (response.IsSuccessStatusCode)
+                var (ok, message) = await ApiClientService.LoginAsync(username, password);
+                if (!ok)
                 {
-                    // Đọc chuỗi JSON trả về từ Server khi đăng nhập thành công
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    using var doc = JsonDocument.Parse(jsonString);
+                    MessageBox.Show(message, "Đăng nhập thất bại", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
-                    // Trích xuất Token và Role lưu vào lớp tĩnh SessionManager dùng chung toàn ứng dụng
-                    SessionManager.JwtToken = doc.RootElement.GetProperty("token").GetString() ?? string.Empty;
-                    SessionManager.CurrentRole = doc.RootElement.GetProperty("role").GetString() ?? string.Empty;
+                // Đăng nhập thành công -> mở khung chính (Shell), ẩn form đăng nhập
+                Hide();
+                using (var shell = new FormMainShell())
+                {
+                    shell.ShowDialog();
+                }
 
-                    MessageBox.Show($"Đăng nhập thành công với quyền: {SessionManager.CurrentRole}", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    // Mở Form quản lý chính (FormCategoryManagement) và ẩn Form đăng nhập đi
-                    FormCategoryManagement mainForm = new FormCategoryManagement();
-                    this.Hide();
-                    mainForm.ShowDialog();
-                    this.Close(); // Đóng hẳn ứng dụng khi form chính tắt
+                // Shell đóng lại: nếu bấm Đăng xuất (phiên đã bị xóa) -> hiện lại màn hình đăng nhập,
+                // còn nếu tắt cửa sổ bằng nút X -> thoát ứng dụng.
+                if (string.IsNullOrEmpty(SessionManager.JwtToken))
+                {
+                    txtPass.Clear();
+                    txtUser.Focus();
+                    Show();
                 }
                 else
                 {
-                    MessageBox.Show("Sai tài khoản hoặc mật khẩu!", "Đăng nhập thất bại", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Close();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi kết nối đến Server: " + ex.Message, "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Lỗi kết nối đến Server: " + ex.Message + "\n\nKiểm tra API đã chạy chưa và port 7132 có đúng không.",
+                    "Lỗi hệ thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnLogin.Enabled = true;
             }
         }
 
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void FormLogin_Load(object sender, EventArgs e)
-        {
-
-        }
+        private void label1_Click(object sender, EventArgs e) { }
+        private void FormLogin_Load(object sender, EventArgs e) { }
     }
 }
