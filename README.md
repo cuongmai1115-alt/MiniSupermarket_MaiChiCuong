@@ -1,60 +1,79 @@
 # 🛒 HỆ THỐNG QUẢN LÝ SIÊU THỊ MINI
 
-## Buổi 3: Tích hợp SQL Server và Entity Framework Core Code-First
+## Buổi 4: Kiến trúc giao diện WinForms Shell (Sidebar & Main Workspace) và điều hướng phân quyền Admin / Cashier / Warehouse
 
 ------------------------------------------------------------------------
 
 ## 1. Mục tiêu và bối cảnh thực tế
 
-Buổi thực hành 3 tập trung vào việc tích hợp **Microsoft SQL Server** và
-**Entity Framework Core Code-First** vào hệ thống quản lý siêu thị mini.
+Buổi thực hành 4 xây dựng **khung giao diện chính (FormMainShell)** cho ứng
+dụng WinForms theo kiến trúc đơn khung (Single-Form Architecture), đồng thời
+áp dụng cơ chế **phân quyền theo vai trò (Role-Based Access Control - RBAC)**
+cho cả giao diện lẫn API.
 
 ### Mục tiêu
 
--   Thay thế cơ chế lưu dữ liệu tạm trên RAM (In-Memory) ở Buổi 1 và
-    Buổi 2 bằng cơ sở dữ liệu quan hệ Microsoft SQL Server.
--   Làm quen với Entity Framework Core (EF Core) Code-First.
--   Sử dụng các lệnh EF Core Migrations để tạo và cập nhật cơ sở dữ
-    liệu.
--   Truy vấn dữ liệu bất đồng bộ bằng LINQ kết hợp `async/await`.
--   Đảm bảo dữ liệu được lưu trữ lâu dài trong SQL Server.
+-   Thiết kế giao diện đơn khung hiện đại gồm thanh chức năng bên trái
+    (**Sidebar**) và vùng làm việc trung tâm (**Main Content**).
+-   Nhúng động Form con vào vùng chứa bằng `TopLevel = false` và
+    `Dock = Fill`, không mở thêm cửa sổ rời rạc.
+-   Hiện thực phân quyền theo 3 vai trò: **Admin**, **Cashier** (Thu ngân),
+    **Warehouse** (Thủ kho): ẩn/hiện nút chức năng ngay sau khi đăng nhập.
+-   Xây dựng các Form con nghiệp vụ: POS, Sản phẩm, Khách hàng, Báo cáo,
+    Quản trị tài khoản.
+-   Bảo vệ phân quyền hai lớp: **ẩn nút ở giao diện** và **chặn ở API
+    bằng JWT** (`[Authorize(Roles = ...)]`).
 
 ### Bối cảnh thực tế
 
-Khi nhân viên thu ngân thêm hoặc sửa nhóm hàng trên phần mềm WinForms,
-dữ liệu sẽ được lưu trực tiếp vào cơ sở dữ liệu SQL Server. Sau khi tắt
-máy hoặc khởi động lại API, dữ liệu vẫn được giữ nguyên.
+Trong siêu thị mini, nhân viên thu ngân chỉ được vào màn hình bán hàng
+(POS), thủ kho chỉ quản lý sản phẩm và nhóm hàng, còn quản trị viên có toàn
+quyền, bao gồm báo cáo tài chính và quản lý tài khoản. Sau khi đăng nhập
+thành công, màn hình điều khiển trung tâm tự thích ứng theo vai trò của
+người dùng và mở sẵn màn hình đúng chuyên môn.
 
 ------------------------------------------------------------------------
 
 ## 2. Kiến trúc hệ thống
 
-Dự án được xây dựng theo mô hình **Client - Server**, gồm hai thành phần
-chính:
+Dự án tiếp tục theo mô hình **Client - Server**:
 
 ### Backend - MiniSupermarket.API
 
-Ứng dụng ASP.NET Core Web API chịu trách nhiệm:
-
--   Xử lý logic nghiệp vụ.
--   Kết nối Microsoft SQL Server.
--   Sử dụng Entity Framework Core để thao tác với cơ sở dữ liệu.
--   Cung cấp RESTful API.
--   Hỗ trợ xử lý bất đồng bộ bằng `async/await`.
+-   ASP.NET Core Web API (.NET 8), Entity Framework Core 8, SQL Server.
+-   Xác thực **JWT Bearer**, token chứa `Name` và `Role`, hết hạn sau 2 giờ.
+-   Mỗi Controller gắn `[Authorize]` theo vai trò, API là lớp bảo vệ cuối
+    cùng dù giao diện đã ẩn nút.
 
 ### Frontend - MiniSupermarket.WinForms
 
-Ứng dụng Windows Forms đóng vai trò là máy trạm tại quầy.
+-   Windows Forms .NET 8, gọi API bằng `HttpClient` dùng chung
+    (`ApiClientService.Client`), tự gắn Bearer Token.
+-   `SessionManager` lưu phiên đăng nhập: `JwtToken`, `CurrentUsername`,
+    `CurrentFullName`, `CurrentRole`.
+-   `FormMainShell` là khung chính, các Form con được nhúng vào
+    `panelMainContent`.
 
-Frontend sử dụng `HttpClient` để:
+### Sơ đồ giao diện FormMainShell
 
--   Gọi API.
--   Xem danh mục.
--   Thêm danh mục.
--   Cập nhật danh mục.
--   Xóa danh mục.
--   Thực hiện các chức năng quản lý dữ liệu khách hàng theo phần mở
-    rộng.
+``` text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                             FormMainShell                                   │
+├────────────────────┬────────────────────────────────────────────────────────┤
+│  panelSidebar      │  panelTopHeader (lblTitle & lblUserInfo)               │
+│  (Width = 230)     ├────────────────────────────────────────────────────────┤
+│  - Logo MiniMart   │                                                        │
+│  - btnPOS          │                                                        │
+│  - btnCategory     │  panelMainContent                                      │
+│  - btnProduct      │  (Dock = Fill)                                         │
+│  - btnCustomer     │                                                        │
+│  - btnReports      │  [Vùng nhúng động các Form con]                        │
+│  - btnUserManage   │                                                        │
+│  ───────────────   │                                                        │
+│  - panelUserFooter │                                                        │
+│    (btnLogout)     │                                                        │
+└────────────────────┴────────────────────────────────────────────────────────┘
+```
 
 ------------------------------------------------------------------------
 
@@ -64,21 +83,15 @@ Frontend sử dụng `HttpClient` để:
 
 -   C# / .NET 8.0
 -   ASP.NET Core Web API
--   Entity Framework Core 8.0
--   LINQ
--   Async/Await
-
-### Database
-
--   Microsoft SQL Server
--   Entity Framework Core Code-First
--   EF Core Migrations
+-   Entity Framework Core 8.0 (SQL Server)
+-   JWT Bearer Authentication
+-   Swagger UI (có nút Authorize nhập token)
 
 ### Frontend
 
 -   Windows Forms .NET 8.0
--   `System.Net.Http.Json`
--   `HttpClient`
+-   `HttpClient`, `System.Net.Http.Json`
+-   `DataGridView`, `TableLayoutPanel`, `ErrorProvider`
 
 ### Công cụ
 
@@ -88,389 +101,360 @@ Frontend sử dụng `HttpClient` để:
 
 ------------------------------------------------------------------------
 
-## 4. Các gói NuGet cần cài đặt
+## 4. Các gói NuGet
 
-Trong project `MiniSupermarket.API`, cài đặt các package:
+Trong project `MiniSupermarket.API`:
 
 ``` text
 Microsoft.EntityFrameworkCore.SqlServer
 Microsoft.EntityFrameworkCore.Tools
 Microsoft.EntityFrameworkCore.Design
+Microsoft.AspNetCore.Authentication.JwtBearer
+System.IdentityModel.Tokens.Jwt
+Swashbuckle.AspNetCore
 ```
 
 ### Chức năng
 
--   `Microsoft.EntityFrameworkCore.SqlServer`: Kết nối EF Core với SQL
-    Server.
--   `Microsoft.EntityFrameworkCore.Tools`: Hỗ trợ các lệnh Migration.
--   `Microsoft.EntityFrameworkCore.Design`: Hỗ trợ môi trường thiết kế
-    và sinh mã EF Core.
+-   `Microsoft.AspNetCore.Authentication.JwtBearer`: xác thực token JWT
+    trong request.
+-   `System.IdentityModel.Tokens.Jwt`: tạo và ký token khi đăng nhập.
+-   `Swashbuckle.AspNetCore`: Swagger UI để kiểm thử API.
 
 ------------------------------------------------------------------------
 
-## 5. Cấu trúc Model
+## 5. Bộ dữ liệu tài khoản mẫu (15 tài khoản kiểm thử)
 
-### Category
+Mật khẩu ban đầu của tất cả tài khoản: `123456`
 
-Bảng `Categories` quản lý các nhóm hàng.
+| STT | Username     | Họ và tên         | Vai trò   | Phạm vi chức năng                        |
+|----:|--------------|-------------------|-----------|------------------------------------------|
+|   1 | admin01      | Nguyễn Quản Trị   | Admin     | Toàn quyền toàn bộ hệ thống              |
+|   2 | admin02      | Trần Giám Đốc     | Admin     | Toàn quyền toàn bộ hệ thống              |
+|   3 | cashier01    | Lê Thu Ngân       | Cashier   | Màn hình POS, Khách hàng                 |
+|   4 | cashier02    | Phạm Bán Hàng     | Cashier   | Màn hình POS, Khách hàng                 |
+|   5 | cashier03    | Hoàng Thu Ngân    | Cashier   | Màn hình POS, Khách hàng                 |
+|   6 | cashier04    | Vũ Thị Quầy       | Cashier   | Màn hình POS, Khách hàng                 |
+|   7 | cashier05    | Đỗ Bán Lẻ         | Cashier   | Màn hình POS, Khách hàng                 |
+|   8 | ware01       | Ngô Quản Kho      | Warehouse | Sản phẩm, Nhóm hàng                      |
+|   9 | ware02       | Bùi Kiểm Kê       | Warehouse | Sản phẩm, Nhóm hàng                      |
+|  10 | ware03       | Dương Thủ Kho     | Warehouse | Sản phẩm, Nhóm hàng                      |
+|  11 | ware04       | Lý Nhập Hàng      | Warehouse | Sản phẩm, Nhóm hàng                      |
+|  12 | admin_backup | Đặng Hỗ Trợ       | Admin     | Toàn quyền toàn bộ hệ thống              |
+|  13 | cashier06    | Hồ Ca Chiều       | Cashier   | Màn hình POS, Khách hàng                 |
+|  14 | ware05       | Trương Vận Chuyển | Warehouse | Sản phẩm, Nhóm hàng                      |
+|  15 | supervisor   | Mai Giám Sát      | Admin     | Toàn quyền toàn bộ hệ thống              |
 
-Các thông tin chính:
-
--   `CategoryId`: Khóa chính, tự tăng.
--   `CategoryName`: Tên nhóm hàng.
--   `Description`: Mô tả nhóm hàng.
--   `Products`: Quan hệ một-nhiều với sản phẩm.
-
-### Product
-
-Bảng `Products` quản lý các mặt hàng trong siêu thị.
-
-Các thông tin chính:
-
--   `ProductId`: Khóa chính, tự tăng.
--   `Barcode`: Mã vạch sản phẩm.
--   `ProductName`: Tên sản phẩm.
--   `Price`: Giá bán.
--   `StockQuantity`: Số lượng tồn kho.
--   `CategoryId`: Khóa ngoại liên kết với `Categories`.
-
-Quan hệ:
-
-``` text
-Category 1 -------- N Product
-```
-
-Một danh mục có thể có nhiều sản phẩm.
+Dữ liệu được nạp tự động bằng `HasData` trong `SupermarketDbContext`
+(bảng `Users`).
 
 ------------------------------------------------------------------------
 
-## 6. SupermarketDbContext
+## 6. Nội dung thực hành từng bước
 
-File:
+### Bước 1: Thiết kế khung FormMainShell
 
-``` text
-MiniSupermarket.API/Data/SupermarketDbContext.cs
-```
+Thuộc tính của `FormMainShell`:
 
-`SupermarketDbContext` là lớp trung gian giúp ứng dụng làm việc với cơ
-sở dữ liệu SQL Server thông qua Entity Framework Core.
+| Thuộc tính    | Giá trị                                               |
+|---------------|-------------------------------------------------------|
+| Size          | 1280 x 720                                            |
+| StartPosition | CenterScreen                                          |
+| Text          | Hệ thống Quản lý Bán lẻ & Tồn kho Siêu thị Mini       |
 
-Các bảng được ánh xạ:
+Các vùng giao diện:
+
+| Control            | Cấu hình                                                       |
+|--------------------|----------------------------------------------------------------|
+| `panelSidebar`     | Dock = Left, Width = 230, nền xanh đen `(24, 30, 48)`          |
+| `panelTopHeader`   | Dock = Top, Height = 60, nền trắng, chứa `lblTitle` (tiêu đề màn hình) và `lblUserInfo` (thông tin nhân viên) |
+| `panelMainContent` | Dock = Fill, nền `(244, 245, 247)`, vùng nhúng Form con        |
+| `panelUserFooter`  | Dock = Bottom, Height = 60, chứa `btnLogout`                   |
+
+Các nút điều hướng trên Sidebar (`FlatStyle = Flat`, `BorderSize = 0`,
+chữ trắng, cao 45, căn trái):
+
+| Nút             | Chức năng               |
+|-----------------|-------------------------|
+| `btnPOS`        | Bán hàng (POS)          |
+| `btnCategory`   | Quản lý Danh mục        |
+| `btnProduct`    | Quản lý Sản phẩm        |
+| `btnCustomer`   | Quản lý Khách hàng      |
+| `btnReports`    | Báo cáo Doanh thu       |
+| `btnUserManage` | Quản trị Tài khoản      |
+| `btnLogout`     | Đăng xuất               |
+
+### Bước 2: Cơ chế nạp Form con động vào Main Panel
+
+Hàm `OpenChildForm` trong `FormMainShell.cs`:
 
 ``` csharp
-public DbSet<Category> Categories { get; set; }
-public DbSet<Product> Products { get; set; }
-```
-
-### Data Seeding
-
-Hệ thống có sẵn 5 danh mục mẫu:
-
-    ID Tên danh mục                 Mô tả
-  ---- ---------------------------- ---------------------------------
-     1 Bánh kẹo & Đồ ăn vặt         Snack, bánh quy, kẹo dẻo
-     2 Nước giải khát & Trà         Nước ngọt, nước khoáng, trà
-     3 Sữa & Sản phẩm từ sữa        Sữa tươi, sữa chua, phô mai
-     4 Mì gói & Thực phẩm ăn liền   Mì ăn liền, phở khô, cháo gói
-     5 Gia vị & Dầu ăn              Nước mắm, hạt nêm, dầu thực vật
-
-------------------------------------------------------------------------
-
-## 7. Cấu hình SQL Server
-
-Mở file:
-
-``` text
-MiniSupermarket.API/appsettings.json
-```
-
-### Sử dụng Windows Authentication
-
-``` json
+private void OpenChildForm(Form childForm, string screenTitle, Button senderButton)
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=MiniSupermarketDb;Trusted_Connection=True;TrustServerCertificate=True;"
-  }
+    ActiveControl = null;                      // tránh lỗi focus khi đóng form cũ
+
+    if (_activeForm != null)
+    {
+        if (_activeForm == _posForm) _activeForm.Hide();   // POS ẩn để giữ giỏ hàng
+        else _activeForm.Close();
+    }
+
+    HighlightActiveButton(senderButton);
+
+    _activeForm = childForm;
+    childForm.TopLevel = false;                        // không phải cửa sổ độc lập
+    childForm.FormBorderStyle = FormBorderStyle.None;  // bỏ viền
+    childForm.Dock = DockStyle.Fill;                   // tràn vùng chứa
+
+    panelMainContent.Controls.Clear();
+    panelMainContent.Controls.Add(childForm);
+    lblTitle.Text = screenTitle;                       // đồng bộ tiêu đề header
+    childForm.BringToFront();
+    childForm.Show();
 }
 ```
 
-### Sử dụng tài khoản SQL Server `sa`
+Hàm `HighlightActiveButton` trả các nút Sidebar về màu gốc rồi tô màu xanh
+`(41, 100, 180)` cho nút đang chọn (duyệt đệ quy cả panel con, bỏ qua
+`btnLogout`).
 
-Nếu SQL Server sử dụng tài khoản `sa`, có thể cấu hình:
+Các sự kiện click được gắn bằng code trong `WireEvents()` theo kiểu gỡ
+trước rồi gắn lại (`-=` rồi `+=`) nên không bao giờ chạy 2 lần.
 
-``` json
+### Bước 3: Logic phân quyền theo vai trò
+
+Sau khi đăng nhập, `FormMainShell_Load` thực hiện 3 việc:
+
+1.  Hiển thị `Nhân viên: <Họ tên> (<username>) | Vai trò: [<Role>]`.
+2.  Gọi `ApplyRolePermissions(role)` để ẩn/hiện nút theo vai trò.
+3.  Gọi `OpenDefaultScreenByRole(role)` để mở màn hình mặc định.
+
+``` csharp
+switch ((role ?? string.Empty).ToUpper())
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=.;Database=MiniSupermarketDb;User Id=sa;Password=123456;MultipleActiveResultSets=true;TrustServerCertificate=True"
-  }
+    case "ADMIN":      // toàn bộ 6 nút đều hiện
+    case "CASHIER":    // chỉ btnPOS, btnCustomer
+    case "WAREHOUSE":  // chỉ btnCategory, btnProduct
+    default:           // vai trò lạ: báo cảnh báo và đóng form
 }
 ```
 
-Nếu SQL Server Express được sử dụng, Server có thể đổi thành:
+### Bước 4: Các Form con nghiệp vụ
 
-``` text
-.\SQLEXPRESS
-```
+| Form                    | Dành cho           | Chức năng chính                                                                 |
+|-------------------------|--------------------|---------------------------------------------------------------------------------|
+| `FormCategoryManagement`| Admin, Warehouse   | Xem nhóm hàng, Admin mới được thêm/sửa/xóa                                      |
+| `FormProductManagement` | Admin, Warehouse   | Tìm theo mã vạch/tên, thêm, sửa, xóa sản phẩm, chọn danh mục, kiểm tra dữ liệu  |
+| `FormCustomerManagement`| Admin, Cashier     | Quản lý khách hàng thân thiết và điểm tích lũy                                  |
+| `FormPOS`               | Admin, Cashier     | Quét mã vạch, giỏ hàng, tính tiền thừa, thanh toán (phím tắt F9, F2, Delete, +/-) |
+| `FormQuickReport`       | Chỉ Admin          | Báo cáo doanh thu theo khoảng ngày (`reports/summary`)                          |
+| `FormUserManagement`    | Chỉ Admin          | Quản trị tài khoản (xem mục 8)                                                  |
 
-### Đặt mật khẩu cho tài khoản sa
-
-Trong SSMS, có thể thực hiện:
-
-``` sql
-ALTER LOGIN sa WITH PASSWORD = '123456';
-```
-
-------------------------------------------------------------------------
-
-## 8. Đăng ký DbContext trong Program.cs
-
-Trong `Program.cs`, đăng ký `SupermarketDbContext`:
+### Bước 5: Gắn các Form vào Sidebar
 
 ``` csharp
-using Microsoft.EntityFrameworkCore;
-using MiniSupermarket.API.Data;
+private void btnCategory_Click(object? s, EventArgs e) =>
+    OpenChildForm(new FormCategoryManagement(), "QUẢN LÝ DANH MỤC NHÓM HÀNG", btnCategory);
 
-var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection");
+private void btnPOS_Click(object? s, EventArgs e)
+{
+    _posForm ??= new FormPOS();    // giữ nguyên giỏ hàng khi chuyển màn hình
+    OpenChildForm(_posForm, "HỆ THỐNG QUẦY BÁN HÀNG & THU NGÂN (POS)", btnPOS);
+}
 
-builder.Services.AddDbContext<SupermarketDbContext>(options =>
-    options.UseSqlServer(connectionString));
+private void btnProduct_Click(object? s, EventArgs e) =>
+    OpenChildForm(new FormProductManagement(), "QUẢN LÝ THÔNG TIN SẢN PHẨM & KHO HÀNG", btnProduct);
+
+private void btnCustomer_Click(object? s, EventArgs e) =>
+    OpenChildForm(new FormCustomerManagement(), "QUẢN LÝ KHÁCH HÀNG & TÍCH ĐIỂM", btnCustomer);
 ```
 
-Sau đó ứng dụng có thể sử dụng `SupermarketDbContext` thông qua
-Dependency Injection.
+### Bước 6: Lớp bảo vệ logic ở cấp hành động
 
-------------------------------------------------------------------------
-
-## 9. EF Core Migrations
-
-Mở:
-
-``` text
-Tools
-→ NuGet Package Manager
-→ Package Manager Console
-```
-
-Đảm bảo **Default project** là:
-
-``` text
-MiniSupermarket.API
-```
-
-### Tạo Migration
-
-``` powershell
-Add-Migration InitialCreateDatabase
-```
-
-### Cập nhật Database
-
-``` powershell
-Update-Database
-```
-
-EF Core sẽ dựa trên các Model và `DbContext` để tạo cấu trúc cơ sở dữ
-liệu SQL Server.
-
-------------------------------------------------------------------------
-
-## 10. CategoriesController
-
-Controller quản lý danh mục:
-
-``` text
-MiniSupermarket.API/Controllers/CategoriesController.cs
-```
-
-Các API chính:
-
-  Phương thức   Endpoint                               Chức năng
-  ------------- -------------------------------------- ----------------------
-  GET           `/api/categories`                      Lấy tất cả danh mục
-  GET           `/api/categories/{id}`                 Lấy danh mục theo ID
-  GET           `/api/categories/search?keyword=...`   Tìm kiếm danh mục
-  POST          `/api/categories`                      Thêm danh mục
-  PUT           `/api/categories/{id}`                 Cập nhật danh mục
-  DELETE        `/api/categories/{id}`                 Xóa danh mục
-
-Controller sử dụng:
+Ngoài việc ẩn nút, các nút nhạy cảm còn kiểm tra vai trò trong sự kiện
+click:
 
 ``` csharp
-ToListAsync()
-FindAsync()
-SaveChangesAsync()
+private void btnReports_Click(object? sender, EventArgs e)
+{
+    if (!string.Equals(SessionManager.CurrentRole, "Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        MessageBox.Show("Bạn không có quyền xem dữ liệu tài chính của siêu thị!",
+            "Từ chối", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+        return;
+    }
+    OpenChildForm(new FormQuickReport(), "BÁO CÁO DOANH THU & HIỆU SUẤT", btnReports);
+}
 ```
 
-để thực hiện truy vấn và cập nhật dữ liệu bất đồng bộ.
+`btnUserManage_Click` bảo vệ tương tự (chỉ Admin).
+
+### Bước 7: Đăng xuất
+
+`btnLogout_Click` hỏi xác nhận, gọi `SessionManager.Clear()` (xóa token,
+username, họ tên, vai trò) rồi đóng khung chính để `FormLogin` hiện lại.
 
 ------------------------------------------------------------------------
 
-## 11. Kiểm thử Backend bằng Swagger
+## 7. Phân quyền hai lớp
 
-Sau khi chạy project `MiniSupermarket.API`:
+### Lớp 1: Giao diện WinForms
 
-1.  Nhấn `F5`.
-2.  Mở Swagger UI.
-3.  Kiểm tra API:
+| Vai trò   | Form mở mặc định        | Các nút hiển thị                                              |
+|-----------|-------------------------|---------------------------------------------------------------|
+| Admin     | FormCategoryManagement  | POS, Danh mục, Sản phẩm, Khách hàng, Báo cáo, Quản trị tài khoản |
+| Cashier   | FormPOS                 | POS, Khách hàng                                               |
+| Warehouse | FormProductManagement   | Danh mục, Sản phẩm                                            |
 
-``` text
-GET /api/categories
-```
+### Lớp 2: Web API (`[Authorize]`)
 
-4.  Thử thêm danh mục bằng:
+| Controller           | Quyền truy cập                                                                 |
+|----------------------|--------------------------------------------------------------------------------|
+| `AuthController`     | `POST /api/auth/login` công khai, trả token + role; tài khoản bị khóa trả 403  |
+| `CategoriesController` | Đã đăng nhập thì xem được; `POST/PUT/DELETE` chỉ Admin                       |
+| `ProductsController` | Đã đăng nhập thì xem được; `POST/PUT/DELETE` chỉ Admin, Warehouse              |
+| `CustomersController`| Admin, Cashier; riêng `DELETE` chỉ Admin                                       |
+| `OrdersController`   | Admin, Cashier (`POST /api/orders/checkout`)                                   |
+| `ReportsController`  | Chỉ Admin                                                                      |
+| `UsersController`    | Chỉ Admin                                                                      |
 
-``` text
-POST /api/categories
-```
+Kết quả khi gọi sai quyền: không có token trả **401**, sai vai trò trả
+**403**.
 
-5.  Kiểm tra lại dữ liệu trong SQL Server Management Studio.
+### Bảng tổng kết vai trò và trách nhiệm
 
-Dữ liệu được tạo hoặc thay đổi thông qua API sẽ được lưu vào SQL Server.
-
-------------------------------------------------------------------------
-
-## 12. Kiểm thử WinForms Client
-
-Khởi chạy:
-
-``` text
-MiniSupermarket.WinForms
-```
-
-Thực hiện các chức năng:
-
--   Xem danh mục.
--   Thêm danh mục.
--   Cập nhật danh mục.
--   Xóa danh mục.
--   Làm việc với dữ liệu thông qua Web API.
-
-Sau khi thao tác, có thể tắt cả WinForms và Backend API rồi mở lại để
-kiểm tra tính bền vững của dữ liệu.
+| Vai trò   | Form khởi chạy mặc định | Các Form được phép mở                                                                      | Bị ngăn chặn                                                         |
+|-----------|-------------------------|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| Admin     | FormCategoryManagement  | POS, Danh mục, Sản phẩm, Khách hàng, Báo cáo, Tài khoản                                    | Không bị chặn                                                        |
+| Cashier   | FormPOS                 | FormPOS, FormCustomerManagement                                                            | Quản lý kho, sửa giá sản phẩm, xem báo cáo, quản lý tài khoản        |
+| Warehouse | FormProductManagement   | FormProductManagement, FormCategoryManagement                                              | Bán hàng POS, xem doanh thu, tạo tài khoản, quản lý khách hàng       |
 
 ------------------------------------------------------------------------
 
-## 13. Phân hệ Customers - Khách hàng thân thiết
+## 8. Màn hình Quản trị Tài khoản (FormUserManagement)
 
-Phần mở rộng của Buổi 3 xây dựng phân hệ quản lý khách hàng.
+Giao diện cùng phong cách với màn Quản lý sản phẩm: thanh tìm kiếm phía
+trên, danh sách bên trái, khung thông tin và các nút bên phải.
 
-Bảng `Customers` dùng để lưu:
+### Tính năng
 
--   Thông tin khách hàng.
--   Số điện thoại.
--   Địa chỉ.
--   Điểm tích lũy.
--   Hạng thành viên.
+-   Tìm theo tên đăng nhập hoặc họ tên, lọc theo vai trò, dòng trạng thái
+    báo số tài khoản và số tài khoản đang bị khóa.
+-   Danh sách gồm: Mã, Tên đăng nhập, Họ và tên, Quyền hạn, Trạng thái.
+    Tài khoản bị khóa hiển thị chữ xám, trạng thái màu đỏ.
+-   **Thêm mới**: kiểm tra tên đăng nhập (từ 4 ký tự, không khoảng trắng,
+    không trùng), mật khẩu (từ 6 ký tự), họ tên, vai trò.
+-   **Cập nhật**: sửa họ tên và vai trò (không đổi tên đăng nhập).
+-   **Khóa / Mở khóa** tài khoản (có hỏi xác nhận).
+-   **Đặt lại MK**: nhập mật khẩu mới trong hộp thoại riêng.
+-   **Nhập mới**: bỏ chọn và quay về chế độ thêm.
+-   Báo lỗi theo từng ô bằng `ErrorProvider`, thông báo API rõ nguyên nhân
+    và mã HTTP.
 
-### Các trường dữ liệu
+### API sử dụng
 
-  Trường           Kiểu dữ liệu    Ý nghĩa
-  ---------------- --------------- ---------------------
-  CustomerId       INT             Khóa chính, tự tăng
-  CustomerName     NVARCHAR(100)   Tên khách hàng
-  PhoneNumber      VARCHAR(15)     Số điện thoại
-  Address          NVARCHAR(200)   Địa chỉ
-  RewardPoints     INT             Điểm tích lũy
-  MembershipRank   NVARCHAR(50)    Hạng thành viên
+| Phương thức | Endpoint                          | Chức năng                         |
+|-------------|-----------------------------------|-----------------------------------|
+| GET         | `/api/users`                      | Lấy danh sách (không trả mật khẩu)|
+| POST        | `/api/users`                      | Thêm tài khoản                    |
+| PUT         | `/api/users/{id}`                 | Sửa họ tên, vai trò               |
+| PUT         | `/api/users/{id}/toggle-lock`     | Khóa / mở khóa                    |
+| PUT         | `/api/users/{id}/reset-password`  | Đặt lại mật khẩu                  |
 
-### Dữ liệu mẫu
+### Ràng buộc bảo vệ ở server
 
-Hệ thống có thể sử dụng 3 khách hàng mẫu:
-
-  Khách hàng     Số điện thoại   Hạng      Điểm
-  -------------- --------------- ------- ------
-  Nguyễn Văn A   0901122334      Vàng       150
-  Trần Thị B     0918877665      Bạc         50
-  Lê Văn C       0983344556      Chuẩn       10
-
-------------------------------------------------------------------------
-
-## 14. Customers API
-
-Các endpoint cần xây dựng:
-
-``` text
-GET    /api/customers
-GET    /api/customers/{id}
-GET    /api/customers/search?keyword=...
-POST   /api/customers
-PUT    /api/customers/{id}
-DELETE /api/customers/{id}
-```
-
-### Chức năng
-
--   Lấy danh sách khách hàng.
--   Xem thông tin khách hàng theo ID.
--   Tìm kiếm theo tên hoặc số điện thoại.
--   Thêm khách hàng.
--   Cập nhật thông tin và hạng thành viên.
--   Xóa khách hàng.
+-   Không cho tự khóa tài khoản đang đăng nhập.
+-   Không cho tự hạ quyền tài khoản đang đăng nhập.
+-   Tên đăng nhập trùng trả `409 Conflict`; vai trò không hợp lệ trả
+    `400 Bad Request`.
 
 ------------------------------------------------------------------------
 
-## 15. Giao diện FormCustomerManagement
+## 9. Hướng dẫn chạy và kiểm thử
 
-Form quản lý khách hàng:
+### Khởi chạy
 
-``` text
-FormCustomerManagement.cs
-```
-
-Các thành phần chính:
-
-### DataGridView
-
-``` text
-dgvCustomers
-```
-
-Dùng để hiển thị danh sách khách hàng.
-
-### Ô nhập liệu
-
-``` text
-txtCustomerId
-txtCustomerName
-txtPhoneNumber
-txtAddress
-txtRewardPoints
-txtMembershipRank
-```
-
-### Các nút chức năng
-
-``` text
-btnLoad
-btnAdd
-btnUpdate
-btnDelete
-btnSearch
-```
-
-Frontend sử dụng `HttpClient` và các phương thức:
+1.  Mở solution bằng Visual Studio 2022.
+2.  Kiểm tra chuỗi kết nối trong `MiniSupermarket.API/appsettings.json`,
+    chạy `Update-Database` nếu chưa có CSDL.
+3.  Chạy project `MiniSupermarket.API` (profile https, cổng `7132`).
+4.  Kiểm tra `BaseUrl` trong `SessionManager.cs` khớp cổng API:
 
 ``` csharp
-GetFromJsonAsync
-PostAsJsonAsync
-PutAsJsonAsync
-DeleteAsync
+private const string BaseUrl = "https://localhost:7132/api/";
 ```
 
-để giao tiếp với Web API.
+5.  Chạy project `MiniSupermarket.WinForms` và đăng nhập.
+
+### Kiểm thử phân quyền trên WinForms
+
+| Tài khoản   | Kết quả mong đợi                                                          |
+|-------------|---------------------------------------------------------------------------|
+| `cashier01` | Sidebar chỉ có Bán hàng (POS) và Khách hàng; mở thẳng màn POS             |
+| `ware01`    | Sidebar chỉ có Danh mục và Sản phẩm; mở thẳng màn Sản phẩm                |
+| `admin01`   | Hiện đủ 6 nút; mở thẳng màn Danh mục                                      |
+| Tài khoản bị khóa | Đăng nhập báo "Tài khoản đã bị khóa. Vui lòng liên hệ Admin!"       |
+
+### Kiểm thử phân quyền trên Swagger
+
+1.  Gọi `POST /api/auth/login` để lấy `token`.
+2.  Bấm **Authorize**, dán token (không cần gõ chữ Bearer).
+3.  Với token `cashier01`: gọi `GET /api/reports/summary` phải trả **403**.
+4.  Với token `ware01`: gọi `POST /api/products` thành công, gọi
+    `GET /api/users` phải trả **403**.
+5.  Với token `admin01`: tất cả API trên đều thành công.
+
+### Checklist đánh giá
+
+-   [ ] Ứng dụng không mở hàng loạt cửa sổ rời rạc, mọi nghiệp vụ chạy
+    trong `panelMainContent`.
+-   [ ] Phân quyền đúng với 3 tài khoản `cashier01`, `ware01`, `admin01`.
+-   [ ] Nút đang chọn đổi màu nổi bật, tiêu đề `lblTitle` đúng tên màn hình.
+-   [ ] Cashier và Warehouse bị từ chối ở cả giao diện lẫn API khi vào
+    chức năng của Admin.
+-   [ ] Đăng xuất xóa phiên và quay về màn hình đăng nhập.
 
 ------------------------------------------------------------------------
 
-## 16. Cấu trúc thư mục dự án
+## 10. Bài tập mở rộng: Báo cáo doanh thu nhanh (FormQuickReport)
+
+Form con nhúng vào `panelMainContent`, chỉ Admin được mở:
+
+-   Chọn khoảng ngày (Từ ngày - Đến ngày) xem báo cáo, nút **Xem báo cáo**.
+-   Các thẻ tóm tắt: tổng doanh thu, tổng số hóa đơn, tổng số sản phẩm đã
+    bán.
+-   Hai lớp bảo vệ: nút `btnReports` bị ẩn với vai trò khác, và
+    `btnReports_Click` kiểm tra lại vai trò trước khi mở form. API
+    `reports/summary` cũng yêu cầu vai trò Admin.
+
+------------------------------------------------------------------------
+
+## 11. Lưu ý và hạn chế hiện tại
+
+-   Mật khẩu đang lưu dạng văn bản thô trong bảng `Users` để phục vụ bài
+    thực hành. Hệ thống thực tế cần băm mật khẩu (BCrypt/PBKDF2).
+-   Khóa bí mật JWT và chuỗi kết nối SQL Server đang đặt trong mã/cấu hình,
+    không nên đưa lên kho mã công khai khi triển khai thật.
+-   Thanh toán ở Buổi 4 mới kiểm tra và trừ tồn kho, cộng điểm khách hàng
+    (10.000đ = 1 điểm). Lưu hóa đơn vào bảng `Orders/OrderDetails` sẽ làm ở
+    Buổi 5, khi đó báo cáo sẽ dùng số liệu thật từ hóa đơn.
+
+------------------------------------------------------------------------
+
+## 12. Cấu trúc thư mục dự án
 
 ``` text
 MiniSupermarketSystem/
 │
 ├── MiniSupermarket.API/
 │   ├── Controllers/
+│   │   ├── AuthController.cs
 │   │   ├── CategoriesController.cs
-│   │   └── CustomersController.cs
+│   │   ├── ProductsController.cs
+│   │   ├── CustomersController.cs
+│   │   ├── OrdersController.cs
+│   │   ├── ReportsController.cs
+│   │   └── UsersController.cs
 │   │
 │   ├── Data/
 │   │   └── SupermarketDbContext.cs
@@ -480,22 +464,31 @@ MiniSupermarketSystem/
 │   ├── Models/
 │   │   ├── Category.cs
 │   │   ├── Product.cs
-│   │   └── Customer.cs
+│   │   ├── Customer.cs
+│   │   ├── Role.cs
+│   │   └── User.cs
 │   │
 │   ├── appsettings.json
 │   └── Program.cs
 │
 └── MiniSupermarket.WinForms/
+    ├── FormLogin.cs
+    ├── FormMainShell.cs
+    ├── FormPOS.cs
     ├── FormCategoryManagement.cs
+    ├── FormProductManagement.cs
     ├── FormCustomerManagement.cs
-    └── ...
+    ├── FormQuickReport.cs
+    ├── FormUserManagement.cs
+    ├── SessionManager.cs
+    └── Program.cs
 ```
 
 ------------------------------------------------------------------------
 
-## 17. Tác giả
+## 13. Tác giả
 
-Họ và tên: Mai Chí Cường
-MSSV:2124110113
-Lớp học phần:CCQ2411D
-Đề tài: Phát triển Ứng dụng Thu ngân và Quản lý Hàng hóa cho Mô hình Bán lẻ -- Cửa hàng Tiện lợi Alpha Mini
+- **Đề tài:** Phát triển Ứng dụng Thu ngân và Quản lý Hàng hóa cho Mô hình Bán lẻ – Cửa hàng Tiện lợi Alpha Mini
+- **Họ tên sinh viên:** Mai Chí Cường
+- **Mã sinh viên:** 2124110113
+- **Lớp học phần:** CCQ2411D
