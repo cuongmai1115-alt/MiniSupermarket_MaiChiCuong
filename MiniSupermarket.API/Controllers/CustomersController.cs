@@ -8,7 +8,7 @@ namespace MiniSupermarket.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize] 
+    [Authorize(Roles = "Admin,Cashier")] // Admin và Cashier được xem/thêm/sửa khách hàng
     public class CustomersController : ControllerBase
     {
         private readonly SupermarketDbContext _context;
@@ -87,6 +87,7 @@ namespace MiniSupermarket.API.Controllers
         }
 
         // DELETE: api/customers/5
+        [Authorize(Roles = "Admin")] // Chỉ Admin được xóa khách hàng
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteCustomer(int id)
         {

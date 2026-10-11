@@ -8,7 +8,7 @@ namespace MiniSupermarket.WinForms
     {
         // Biến lưu trữ Form con đang được kích hoạt hiển thị
         private Form? _activeForm = null;
-
+        private FormPOS? _posForm;
         public FormMainShell()
         {
             InitializeComponent();
@@ -56,10 +56,14 @@ namespace MiniSupermarket.WinForms
         /// </summary>
         private void OpenChildForm(Form childForm, string screenTitle, Button senderButton)
         {
+            // Bỏ tham chiếu focus tới form con cũ trước khi đóng (tránh lỗi 'Invisible or disabled control cannot be activated')
+            ActiveControl = null;
+
             // Đóng form con đang mở (nếu có) trước khi nạp form mới
             if (_activeForm != null)
             {
-                _activeForm.Close();
+                if (_activeForm == _posForm) _activeForm.Hide();   // ẩn, không đóng
+                else _activeForm.Close();
             }
 
             HighlightActiveButton(senderButton);
@@ -200,7 +204,8 @@ namespace MiniSupermarket.WinForms
         // 2. Bán hàng POS (Admin & Cashier) - màn hình thật sẽ hoàn thiện ở Buổi 5
         private void btnPOS_Click(object? sender, EventArgs e)
         {
-            OpenChildForm(new FormPOS(), "HỆ THỐNG QUẦY BÁN HÀNG & THU NGÂN (POS)", btnPOS);
+            _posForm ??= new FormPOS();
+            OpenChildForm(_posForm, "HỆ THỐNG QUẦY BÁN HÀNG & THU NGÂN (POS)", btnPOS);
         }
 
         // 3. Quản lý Sản phẩm (Admin & Warehouse)
