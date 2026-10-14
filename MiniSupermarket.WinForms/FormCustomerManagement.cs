@@ -537,9 +537,11 @@ namespace MiniSupermarket.WinForms
                     await ShowApiErrorAsync("Thêm khách hàng", response);
                     return;
                 }
+                string addedName = txtCustomerName.Text.Trim();
                 ClearInput();
                 await ReloadAllAsync();
                 SetStatus("Thêm khách hàng thành công!", StatusKind.Success);
+                MessageBox.Show($"Đã thêm khách hàng \"{addedName}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -569,9 +571,11 @@ namespace MiniSupermarket.WinForms
                     await ShowApiErrorAsync("Cập nhật khách hàng", response);
                     return;
                 }
+                string updatedName = txtCustomerName.Text.Trim();
                 ClearInput();
                 await ReloadAllAsync();
                 SetStatus("Cập nhật khách hàng thành công!", StatusKind.Success);
+                MessageBox.Show($"Đã cập nhật khách hàng \"{updatedName}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -608,6 +612,7 @@ namespace MiniSupermarket.WinForms
                 ClearInput();
                 await ReloadAllAsync();
                 SetStatus($"Đã xóa khách hàng \"{name}\".", StatusKind.Success);
+                MessageBox.Show($"Đã xóa khách hàng \"{name}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {

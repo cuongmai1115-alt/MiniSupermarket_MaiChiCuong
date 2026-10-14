@@ -264,8 +264,7 @@
             // 
             // pnlRight
             // 
-            pnlRight.AutoScroll = true;
-            pnlRight.AutoScrollMinSize = new Size(0, 540);
+            pnlRight.AutoScroll = false;
             pnlRight.ColumnCount = 1;
             pnlRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             pnlRight.Controls.Add(groupBox3, 0, 0);

@@ -509,9 +509,11 @@ namespace MiniSupermarket.WinForms
                     await ShowApiErrorAsync("Thêm tài khoản", response);
                     return;
                 }
+                string addedUsername = newUser.Username;
                 ClearInput();
                 await ReloadAllAsync();
                 SetStatus("Thêm tài khoản thành công!", StatusKind.Success);
+                MessageBox.Show($"Đã thêm tài khoản \"{addedUsername}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -547,9 +549,11 @@ namespace MiniSupermarket.WinForms
                     await ShowApiErrorAsync("Cập nhật tài khoản", response);
                     return;
                 }
+                string updatedUsername = txtUsername.Text.Trim();
                 ClearInput();
                 await ReloadAllAsync();
                 SetStatus("Cập nhật tài khoản thành công!", StatusKind.Success);
+                MessageBox.Show($"Đã cập nhật tài khoản \"{updatedUsername}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -587,6 +591,7 @@ namespace MiniSupermarket.WinForms
                 ClearInput();
                 await ReloadAllAsync();
                 SetStatus($"Đã {action} tài khoản \"{user.Username}\".", StatusKind.Success);
+                MessageBox.Show($"Đã {action} tài khoản \"{user.Username}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -625,6 +630,7 @@ namespace MiniSupermarket.WinForms
                     return;
                 }
                 SetStatus($"Đã đặt lại mật khẩu cho \"{user.Username}\".", StatusKind.Success);
+                MessageBox.Show($"Đã đặt lại mật khẩu cho tài khoản \"{user.Username}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
