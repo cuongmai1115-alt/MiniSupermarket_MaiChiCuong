@@ -48,6 +48,29 @@ namespace MiniSupermarket.API.Controllers
             return Ok(new { u.Id });
         }
 
+        // PUT api/users/5  - sửa họ tên và vai trò (không đổi username/mật khẩu)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateUserRequest r)
+        {
+            if (string.IsNullOrWhiteSpace(r.FullName))
+                return BadRequest(new { message = "Họ và tên không được trống!" });
+            if (!ValidRoles.Contains(r.Role))
+                return BadRequest(new { message = "Vai trò không hợp lệ!" });
+
+            var u = await _db.Users.FindAsync(id);
+            if (u == null) return NotFound(new { message = "Không tìm thấy tài khoản!" });
+
+            // Không cho tự hạ quyền chính mình, tránh hệ thống không còn ai là Admin
+            bool isSelf = string.Equals(u.Username, User.Identity?.Name, StringComparison.OrdinalIgnoreCase);
+            if (isSelf && r.Role != "Admin")
+                return BadRequest(new { message = "Không thể tự hạ quyền tài khoản đang đăng nhập!" });
+
+            u.FullName = r.FullName.Trim();
+            u.Role = r.Role;
+            await _db.SaveChangesAsync();
+            return NoContent();
+        }
+
         // PUT api/users/5/toggle-lock
         [HttpPut("{id:int}/toggle-lock")]
         public async Task<IActionResult> ToggleLock(int id)
@@ -81,6 +104,12 @@ namespace MiniSupermarket.API.Controllers
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string? FullName { get; set; }
+        public string Role { get; set; } = "Cashier";
+    }
+
+    public class UpdateUserRequest
+    {
+        public string FullName { get; set; } = string.Empty;
         public string Role { get; set; } = "Cashier";
     }
 
