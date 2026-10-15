@@ -655,7 +655,6 @@ namespace MiniSupermarket.WinForms
 
         }
     }
-
     // DTO phía client: cùng tên thuộc tính với JSON của GET api/users
     public class UserDto
     {
