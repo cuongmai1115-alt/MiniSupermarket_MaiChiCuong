@@ -67,18 +67,18 @@
             // 
             tlpMain.ColumnCount = 2;
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 389F));
+            tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 340F));
             tlpMain.Controls.Add(groupBox1, 0, 0);
             tlpMain.Controls.Add(groupBox2, 0, 1);
             tlpMain.Controls.Add(pnlRight, 1, 1);
             tlpMain.Dock = DockStyle.Fill;
-            tlpMain.Location = new Point(18, 21);
+            tlpMain.Location = new Point(16, 16);
             tlpMain.Margin = new Padding(0);
             tlpMain.Name = "tlpMain";
             tlpMain.RowCount = 2;
-            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 99F));
+            tlpMain.RowStyles.Add(new RowStyle(SizeType.Absolute, 74F));
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tlpMain.Size = new Size(1221, 785);
+            tlpMain.Size = new Size(1068, 588);
             tlpMain.TabIndex = 0;
             // 
             // groupBox1
@@ -88,10 +88,10 @@
             groupBox1.Controls.Add(tlpSearch);
             groupBox1.Dock = DockStyle.Fill;
             groupBox1.Location = new Point(0, 0);
-            groupBox1.Margin = new Padding(0, 0, 0, 13);
+            groupBox1.Margin = new Padding(0, 0, 0, 10);
             groupBox1.Name = "groupBox1";
-            groupBox1.Padding = new Padding(11, 3, 11, 11);
-            groupBox1.Size = new Size(1221, 86);
+            groupBox1.Padding = new Padding(10, 2, 10, 8);
+            groupBox1.Size = new Size(1068, 64);
             groupBox1.TabIndex = 0;
             groupBox1.TabStop = false;
             groupBox1.Text = "Tìm kiếm";
@@ -100,18 +100,17 @@
             // 
             tlpSearch.ColumnCount = 3;
             tlpSearch.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tlpSearch.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 126F));
-            tlpSearch.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 114F));
+            tlpSearch.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
+            tlpSearch.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100F));
             tlpSearch.Controls.Add(txtKeyword, 0, 0);
             tlpSearch.Controls.Add(btnSearch, 1, 0);
             tlpSearch.Controls.Add(btnLoad, 2, 0);
             tlpSearch.Dock = DockStyle.Fill;
-            tlpSearch.Location = new Point(11, 23);
-            tlpSearch.Margin = new Padding(3, 4, 3, 4);
+            tlpSearch.Location = new Point(10, 18);
             tlpSearch.Name = "tlpSearch";
             tlpSearch.RowCount = 1;
             tlpSearch.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tlpSearch.Size = new Size(1199, 52);
+            tlpSearch.Size = new Size(1048, 38);
             tlpSearch.TabIndex = 0;
             // 
             // txtKeyword
@@ -119,11 +118,10 @@
             txtKeyword.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             txtKeyword.BackColor = Color.FromArgb(249, 250, 251);
             txtKeyword.Font = new Font("Segoe UI", 10.5F);
-            txtKeyword.Location = new Point(3, 10);
-            txtKeyword.Margin = new Padding(3, 4, 3, 4);
+            txtKeyword.Location = new Point(3, 6);
             txtKeyword.Name = "txtKeyword";
             txtKeyword.PlaceholderText = "Nhập mã vạch hoặc tên sản phẩm cần tìm, nhấn Enter";
-            txtKeyword.Size = new Size(953, 31);
+            txtKeyword.Size = new Size(832, 26);
             txtKeyword.TabIndex = 0;
             // 
             // btnSearch
@@ -134,10 +132,10 @@
             btnSearch.FlatStyle = FlatStyle.Flat;
             btnSearch.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnSearch.ForeColor = Color.White;
-            btnSearch.Location = new Point(968, 3);
-            btnSearch.Margin = new Padding(9, 3, 0, 3);
+            btnSearch.Location = new Point(846, 2);
+            btnSearch.Margin = new Padding(8, 2, 0, 2);
             btnSearch.Name = "btnSearch";
-            btnSearch.Size = new Size(117, 46);
+            btnSearch.Size = new Size(102, 34);
             btnSearch.TabIndex = 1;
             btnSearch.Text = "Tìm kiếm";
             btnSearch.UseVisualStyleBackColor = false;
@@ -150,10 +148,10 @@
             btnLoad.FlatStyle = FlatStyle.Flat;
             btnLoad.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnLoad.ForeColor = Color.FromArgb(17, 24, 39);
-            btnLoad.Location = new Point(1094, 3);
-            btnLoad.Margin = new Padding(9, 3, 0, 3);
+            btnLoad.Location = new Point(956, 2);
+            btnLoad.Margin = new Padding(8, 2, 0, 2);
             btnLoad.Name = "btnLoad";
-            btnLoad.Size = new Size(105, 46);
+            btnLoad.Size = new Size(92, 34);
             btnLoad.TabIndex = 2;
             btnLoad.Text = "Tải lại";
             btnLoad.UseVisualStyleBackColor = false;
@@ -165,11 +163,11 @@
             groupBox2.Controls.Add(dgvProducts);
             groupBox2.Controls.Add(lblStatus);
             groupBox2.Dock = DockStyle.Fill;
-            groupBox2.Location = new Point(0, 99);
-            groupBox2.Margin = new Padding(0, 0, 14, 0);
+            groupBox2.Location = new Point(0, 74);
+            groupBox2.Margin = new Padding(0, 0, 12, 0);
             groupBox2.Name = "groupBox2";
-            groupBox2.Padding = new Padding(9, 5, 9, 8);
-            groupBox2.Size = new Size(818, 686);
+            groupBox2.Padding = new Padding(8, 4, 8, 6);
+            groupBox2.Size = new Size(716, 514);
             groupBox2.TabIndex = 1;
             groupBox2.TabStop = false;
             groupBox2.Text = "Danh sách sản phẩm";
@@ -181,14 +179,13 @@
             dgvProducts.ColumnHeadersHeight = 29;
             dgvProducts.Columns.AddRange(new DataGridViewColumn[] { colId, colBarcode, colProductName, colCategory, colPrice, colStock });
             dgvProducts.Dock = DockStyle.Fill;
-            dgvProducts.Location = new Point(9, 25);
-            dgvProducts.Margin = new Padding(3, 4, 3, 4);
+            dgvProducts.Location = new Point(8, 20);
             dgvProducts.MultiSelect = false;
             dgvProducts.Name = "dgvProducts";
             dgvProducts.ReadOnly = true;
             dgvProducts.RowHeadersWidth = 51;
             dgvProducts.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvProducts.Size = new Size(800, 613);
+            dgvProducts.Size = new Size(700, 458);
             dgvProducts.TabIndex = 0;
             dgvProducts.CellClick += dgvProducts_CellClick;
             // 
@@ -252,10 +249,10 @@
             lblStatus.Dock = DockStyle.Bottom;
             lblStatus.Font = new Font("Segoe UI", 9.5F);
             lblStatus.ForeColor = Color.FromArgb(107, 114, 128);
-            lblStatus.Location = new Point(9, 638);
+            lblStatus.Location = new Point(8, 478);
             lblStatus.Name = "lblStatus";
             lblStatus.Padding = new Padding(2, 0, 0, 0);
-            lblStatus.Size = new Size(800, 40);
+            lblStatus.Size = new Size(700, 30);
             lblStatus.TabIndex = 1;
             lblStatus.Text = "Sẵn sàng.";
             lblStatus.TextAlign = ContentAlignment.MiddleLeft;
@@ -267,13 +264,13 @@
             pnlRight.Controls.Add(groupBox3, 0, 0);
             pnlRight.Controls.Add(tlpButtons, 0, 1);
             pnlRight.Dock = DockStyle.Fill;
-            pnlRight.Location = new Point(832, 99);
+            pnlRight.Location = new Point(728, 74);
             pnlRight.Margin = new Padding(0);
             pnlRight.Name = "pnlRight";
             pnlRight.RowCount = 2;
             pnlRight.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            pnlRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 149F));
-            pnlRight.Size = new Size(389, 686);
+            pnlRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 112F));
+            pnlRight.Size = new Size(340, 514);
             pnlRight.TabIndex = 2;
             // 
             // groupBox3
@@ -284,8 +281,8 @@
             groupBox3.Location = new Point(0, 0);
             groupBox3.Margin = new Padding(0);
             groupBox3.Name = "groupBox3";
-            groupBox3.Padding = new Padding(11, 5, 11, 11);
-            groupBox3.Size = new Size(389, 537);
+            groupBox3.Padding = new Padding(10, 4, 10, 8);
+            groupBox3.Size = new Size(340, 402);
             groupBox3.TabIndex = 2;
             groupBox3.TabStop = false;
             groupBox3.Text = "Thông tin sản phẩm";
@@ -307,8 +304,7 @@
             tlpInfo.Controls.Add(lblStock, 0, 10);
             tlpInfo.Controls.Add(numStock, 0, 11);
             tlpInfo.Dock = DockStyle.Fill;
-            tlpInfo.Location = new Point(11, 25);
-            tlpInfo.Margin = new Padding(3, 4, 3, 4);
+            tlpInfo.Location = new Point(10, 20);
             tlpInfo.Name = "tlpInfo";
             tlpInfo.RowCount = 12;
             tlpInfo.RowStyles.Add(new RowStyle(SizeType.Percent, 38F));
@@ -323,7 +319,7 @@
             tlpInfo.RowStyles.Add(new RowStyle(SizeType.Percent, 62F));
             tlpInfo.RowStyles.Add(new RowStyle(SizeType.Percent, 38F));
             tlpInfo.RowStyles.Add(new RowStyle(SizeType.Percent, 62F));
-            tlpInfo.Size = new Size(367, 501);
+            tlpInfo.Size = new Size(320, 374);
             tlpInfo.TabIndex = 0;
             // 
             // lblId
@@ -333,7 +329,7 @@
             lblId.ForeColor = Color.FromArgb(75, 85, 99);
             lblId.Location = new Point(3, 0);
             lblId.Name = "lblId";
-            lblId.Size = new Size(361, 31);
+            lblId.Size = new Size(314, 23);
             lblId.TabIndex = 0;
             lblId.Text = "Mã SP (tự sinh)";
             lblId.TextAlign = ContentAlignment.BottomLeft;
@@ -343,11 +339,10 @@
             txtId.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             txtId.BackColor = Color.FromArgb(243, 244, 246);
             txtId.Font = new Font("Segoe UI", 10.5F);
-            txtId.Location = new Point(3, 41);
-            txtId.Margin = new Padding(3, 4, 3, 4);
+            txtId.Location = new Point(3, 29);
             txtId.Name = "txtId";
             txtId.ReadOnly = true;
-            txtId.Size = new Size(361, 31);
+            txtId.Size = new Size(314, 26);
             txtId.TabIndex = 0;
             txtId.TabStop = false;
             // 
@@ -356,9 +351,9 @@
             lblBarcode.Dock = DockStyle.Fill;
             lblBarcode.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             lblBarcode.ForeColor = Color.FromArgb(75, 85, 99);
-            lblBarcode.Location = new Point(3, 82);
+            lblBarcode.Location = new Point(3, 61);
             lblBarcode.Name = "lblBarcode";
-            lblBarcode.Size = new Size(361, 31);
+            lblBarcode.Size = new Size(314, 23);
             lblBarcode.TabIndex = 1;
             lblBarcode.Text = "Mã vạch (*)";
             lblBarcode.TextAlign = ContentAlignment.BottomLeft;
@@ -368,12 +363,11 @@
             txtBarcode.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             txtBarcode.BackColor = Color.FromArgb(249, 250, 251);
             txtBarcode.Font = new Font("Segoe UI", 10.5F);
-            txtBarcode.Location = new Point(3, 123);
-            txtBarcode.Margin = new Padding(3, 4, 3, 4);
+            txtBarcode.Location = new Point(3, 90);
             txtBarcode.MaxLength = 50;
             txtBarcode.Name = "txtBarcode";
             txtBarcode.PlaceholderText = "Tối đa 50 ký tự";
-            txtBarcode.Size = new Size(361, 31);
+            txtBarcode.Size = new Size(314, 26);
             txtBarcode.TabIndex = 1;
             // 
             // lblName
@@ -381,9 +375,9 @@
             lblName.Dock = DockStyle.Fill;
             lblName.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             lblName.ForeColor = Color.FromArgb(75, 85, 99);
-            lblName.Location = new Point(3, 164);
+            lblName.Location = new Point(3, 122);
             lblName.Name = "lblName";
-            lblName.Size = new Size(361, 31);
+            lblName.Size = new Size(314, 23);
             lblName.TabIndex = 2;
             lblName.Text = "Tên sản phẩm (*)";
             lblName.TextAlign = ContentAlignment.BottomLeft;
@@ -393,12 +387,11 @@
             txtProductName.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             txtProductName.BackColor = Color.FromArgb(249, 250, 251);
             txtProductName.Font = new Font("Segoe UI", 10.5F);
-            txtProductName.Location = new Point(3, 205);
-            txtProductName.Margin = new Padding(3, 4, 3, 4);
+            txtProductName.Location = new Point(3, 151);
             txtProductName.MaxLength = 150;
             txtProductName.Name = "txtProductName";
             txtProductName.PlaceholderText = "Tối đa 150 ký tự";
-            txtProductName.Size = new Size(361, 31);
+            txtProductName.Size = new Size(314, 26);
             txtProductName.TabIndex = 2;
             // 
             // lblCategory
@@ -406,9 +399,9 @@
             lblCategory.Dock = DockStyle.Fill;
             lblCategory.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             lblCategory.ForeColor = Color.FromArgb(75, 85, 99);
-            lblCategory.Location = new Point(3, 246);
+            lblCategory.Location = new Point(3, 183);
             lblCategory.Name = "lblCategory";
-            lblCategory.Size = new Size(361, 31);
+            lblCategory.Size = new Size(314, 23);
             lblCategory.TabIndex = 3;
             lblCategory.Text = "Danh mục (*)";
             lblCategory.TextAlign = ContentAlignment.BottomLeft;
@@ -420,10 +413,9 @@
             cbCategory.DropDownStyle = ComboBoxStyle.DropDownList;
             cbCategory.FlatStyle = FlatStyle.Flat;
             cbCategory.Font = new Font("Segoe UI", 10.5F);
-            cbCategory.Location = new Point(3, 286);
-            cbCategory.Margin = new Padding(3, 4, 3, 4);
+            cbCategory.Location = new Point(3, 211);
             cbCategory.Name = "cbCategory";
-            cbCategory.Size = new Size(361, 31);
+            cbCategory.Size = new Size(314, 27);
             cbCategory.TabIndex = 3;
             // 
             // lblPrice
@@ -431,9 +423,9 @@
             lblPrice.Dock = DockStyle.Fill;
             lblPrice.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             lblPrice.ForeColor = Color.FromArgb(75, 85, 99);
-            lblPrice.Location = new Point(3, 328);
+            lblPrice.Location = new Point(3, 244);
             lblPrice.Name = "lblPrice";
-            lblPrice.Size = new Size(361, 31);
+            lblPrice.Size = new Size(314, 23);
             lblPrice.TabIndex = 4;
             lblPrice.Text = "Đơn giá (đồng) (*)";
             lblPrice.TextAlign = ContentAlignment.BottomLeft;
@@ -443,12 +435,11 @@
             txtPrice.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             txtPrice.BackColor = Color.FromArgb(249, 250, 251);
             txtPrice.Font = new Font("Segoe UI", 10.5F);
-            txtPrice.Location = new Point(3, 369);
-            txtPrice.Margin = new Padding(3, 4, 3, 4);
+            txtPrice.Location = new Point(3, 273);
             txtPrice.MaxLength = 15;
             txtPrice.Name = "txtPrice";
             txtPrice.PlaceholderText = "Ví dụ: 32000";
-            txtPrice.Size = new Size(361, 31);
+            txtPrice.Size = new Size(314, 26);
             txtPrice.TabIndex = 4;
             // 
             // lblStock
@@ -456,9 +447,9 @@
             lblStock.Dock = DockStyle.Fill;
             lblStock.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             lblStock.ForeColor = Color.FromArgb(75, 85, 99);
-            lblStock.Location = new Point(3, 410);
+            lblStock.Location = new Point(3, 305);
             lblStock.Name = "lblStock";
-            lblStock.Size = new Size(361, 31);
+            lblStock.Size = new Size(314, 23);
             lblStock.TabIndex = 5;
             lblStock.Text = "Số lượng tồn";
             lblStock.TextAlign = ContentAlignment.BottomLeft;
@@ -467,11 +458,10 @@
             // 
             numStock.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             numStock.Font = new Font("Segoe UI", 10.5F);
-            numStock.Location = new Point(3, 455);
-            numStock.Margin = new Padding(3, 4, 3, 4);
+            numStock.Location = new Point(3, 338);
             numStock.Maximum = new decimal(new int[] { 99999, 0, 0, 0 });
             numStock.Name = "numStock";
-            numStock.Size = new Size(361, 31);
+            numStock.Size = new Size(314, 26);
             numStock.TabIndex = 5;
             // 
             // tlpButtons
@@ -484,14 +474,14 @@
             tlpButtons.Controls.Add(btnDelete, 0, 1);
             tlpButtons.Controls.Add(btnClear, 1, 1);
             tlpButtons.Dock = DockStyle.Fill;
-            tlpButtons.Location = new Point(0, 537);
+            tlpButtons.Location = new Point(0, 402);
             tlpButtons.Margin = new Padding(0);
             tlpButtons.Name = "tlpButtons";
-            tlpButtons.Padding = new Padding(0, 16, 0, 0);
+            tlpButtons.Padding = new Padding(0, 12, 0, 0);
             tlpButtons.RowCount = 2;
-            tlpButtons.RowStyles.Add(new RowStyle(SizeType.Absolute, 64F));
-            tlpButtons.RowStyles.Add(new RowStyle(SizeType.Absolute, 64F));
-            tlpButtons.Size = new Size(389, 149);
+            tlpButtons.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
+            tlpButtons.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
+            tlpButtons.Size = new Size(340, 112);
             tlpButtons.TabIndex = 1;
             // 
             // btnAdd
@@ -502,10 +492,10 @@
             btnAdd.FlatStyle = FlatStyle.Flat;
             btnAdd.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnAdd.ForeColor = Color.White;
-            btnAdd.Location = new Point(0, 16);
-            btnAdd.Margin = new Padding(0, 0, 6, 11);
+            btnAdd.Location = new Point(0, 12);
+            btnAdd.Margin = new Padding(0, 0, 5, 8);
             btnAdd.Name = "btnAdd";
-            btnAdd.Size = new Size(188, 53);
+            btnAdd.Size = new Size(165, 40);
             btnAdd.TabIndex = 6;
             btnAdd.Text = "Thêm mới";
             btnAdd.UseVisualStyleBackColor = false;
@@ -519,10 +509,10 @@
             btnUpdate.FlatStyle = FlatStyle.Flat;
             btnUpdate.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnUpdate.ForeColor = Color.White;
-            btnUpdate.Location = new Point(200, 16);
-            btnUpdate.Margin = new Padding(6, 0, 0, 11);
+            btnUpdate.Location = new Point(175, 12);
+            btnUpdate.Margin = new Padding(5, 0, 0, 8);
             btnUpdate.Name = "btnUpdate";
-            btnUpdate.Size = new Size(189, 53);
+            btnUpdate.Size = new Size(165, 40);
             btnUpdate.TabIndex = 7;
             btnUpdate.Text = "Cập nhật";
             btnUpdate.UseVisualStyleBackColor = false;
@@ -536,10 +526,10 @@
             btnDelete.FlatStyle = FlatStyle.Flat;
             btnDelete.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnDelete.ForeColor = Color.FromArgb(220, 38, 38);
-            btnDelete.Location = new Point(0, 80);
-            btnDelete.Margin = new Padding(0, 0, 6, 11);
+            btnDelete.Location = new Point(0, 60);
+            btnDelete.Margin = new Padding(0, 0, 5, 8);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(188, 58);
+            btnDelete.Size = new Size(165, 44);
             btnDelete.TabIndex = 8;
             btnDelete.Text = "Xóa";
             btnDelete.UseVisualStyleBackColor = false;
@@ -552,10 +542,10 @@
             btnClear.FlatStyle = FlatStyle.Flat;
             btnClear.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnClear.ForeColor = Color.FromArgb(17, 24, 39);
-            btnClear.Location = new Point(200, 80);
-            btnClear.Margin = new Padding(6, 0, 0, 11);
+            btnClear.Location = new Point(175, 60);
+            btnClear.Margin = new Padding(5, 0, 0, 8);
             btnClear.Name = "btnClear";
-            btnClear.Size = new Size(189, 58);
+            btnClear.Size = new Size(165, 44);
             btnClear.TabIndex = 9;
             btnClear.Text = "Nhập mới";
             btnClear.UseVisualStyleBackColor = false;
@@ -568,15 +558,14 @@
             // 
             // FormProductManagement
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(243, 244, 246);
-            ClientSize = new Size(1257, 827);
+            ClientSize = new Size(1100, 620);
             Controls.Add(tlpMain);
             Font = new Font("Segoe UI", 9F);
-            Margin = new Padding(3, 4, 3, 4);
             Name = "FormProductManagement";
-            Padding = new Padding(18, 21, 18, 21);
+            Padding = new Padding(16);
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Quản lý sản phẩm";
             Load += FormProductManagement_Load;

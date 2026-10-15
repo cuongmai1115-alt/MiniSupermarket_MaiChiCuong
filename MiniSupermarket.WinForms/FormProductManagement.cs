@@ -23,6 +23,8 @@ namespace MiniSupermarket.WinForms
         private List<ProductDto> _inventory = new();   // toàn bộ sản phẩm (dùng đếm cảnh báo, kiểm tra trùng mã vạch)
         private List<ProductDto> _current = new();     // kết quả server trả về theo từ khóa/danh mục đang tìm
         private int _selectedProductId;
+        private ComboBox cbFilterCategory = null!;   // lọc theo danh mục (tạo bằng code, nằm cạnh ô tìm kiếm)
+        private bool _suppressFilter;                  // true khi đang nạp lại combo, tránh tự kích hoạt tìm kiếm
         private int _busyCount; // đếm số request đang chạy để khóa/mở nút đúng lúc
 
         // Server chỉ cho Admin và Warehouse thêm/sửa/xóa (xem ProductsController); vai trò khác chỉ được xem
@@ -40,6 +42,8 @@ namespace MiniSupermarket.WinForms
             txtProductName.TextChanged += (s, e) => errorProvider1.SetError(txtProductName, string.Empty);
             txtPrice.TextChanged += (s, e) => errorProvider1.SetError(txtPrice, string.Empty);
             cbCategory.SelectedIndexChanged += (s, e) => errorProvider1.SetError(cbCategory, string.Empty);
+
+            BuildCategoryFilter();
 
             // Nhấn Enter trong ô tìm kiếm (hoặc máy quét mã vạch gửi Enter) = bấm nút Tìm kiếm
             txtKeyword.KeyDown += (s, e) =>
@@ -310,6 +314,7 @@ namespace MiniSupermarket.WinForms
             // Nút ghi dữ liệu còn phụ thuộc vai trò
             foreach (var b in new[] { btnAdd, btnUpdate, btnDelete })
                 b.Enabled = idle && CanEdit;
+            cbFilterCategory.Enabled = idle;
             UseWaitCursor = !idle;
         }
 
@@ -332,12 +337,18 @@ namespace MiniSupermarket.WinForms
             dgvProducts.ClearSelection(); // không chọn sẵn dòng đầu để tránh lệch với các ô nhập
 
             string keyword = txtKeyword.Text.Trim();
-            if (keyword.Length == 0)
+            string? catName = SelectedFilterCategoryId() > 0 ? (cbFilterCategory.Text) : null;
+
+            var criteria = new List<string>();
+            if (keyword.Length > 0) criteria.Add($"từ khóa \"{keyword}\"");
+            if (catName != null) criteria.Add($"danh mục \"{catName}\"");
+
+            if (criteria.Count == 0)
                 SetStatus(_current.Count == 0 ? "Chưa có sản phẩm nào." : $"Hiển thị {_current.Count} sản phẩm.", _current.Count == 0 ? StatusKind.Warning : StatusKind.Info);
             else if (_current.Count == 0)
-                SetStatus($"Không tìm thấy sản phẩm nào với từ khóa \"{keyword}\".", StatusKind.Warning);
+                SetStatus($"Không tìm thấy sản phẩm nào với {string.Join(" và ", criteria)}.", StatusKind.Warning);
             else
-                SetStatus($"Tìm thấy {_current.Count} sản phẩm với từ khóa \"{keyword}\".", StatusKind.Info);
+                SetStatus($"Tìm thấy {_current.Count} sản phẩm với {string.Join(" và ", criteria)}.", StatusKind.Info);
         }
 
         private void ClearInput()
@@ -418,6 +429,20 @@ namespace MiniSupermarket.WinForms
                 cbCategory.DisplayMember = "CategoryName";
                 cbCategory.ValueMember = "CategoryId";
                 cbCategory.SelectedIndex = -1;
+
+                // Combo lọc: thêm mục "Tất cả danh mục" (Id = 0) lên đầu, giữ lại lựa chọn cũ nếu còn
+                int previous = SelectedFilterCategoryId();
+                var filterList = new List<CategoryDto> { new CategoryDto { CategoryId = 0, CategoryName = "Tất cả danh mục" } };
+                filterList.AddRange(cats);
+                _suppressFilter = true;
+                try
+                {
+                    cbFilterCategory.DataSource = filterList;
+                    cbFilterCategory.DisplayMember = "CategoryName";
+                    cbFilterCategory.ValueMember = "CategoryId";
+                    cbFilterCategory.SelectedValue = filterList.Any(c => c.CategoryId == previous) ? previous : 0;
+                }
+                finally { _suppressFilter = false; }
             }
             catch (Exception ex)
             {
@@ -466,13 +491,21 @@ namespace MiniSupermarket.WinForms
             }
         }
 
-        // Tìm theo mã vạch hoặc tên bằng Query String: GET api/products?keyword=abc (server lọc)
+        // Id danh mục đang chọn ở combo lọc (0 = tất cả)
+        private int SelectedFilterCategoryId() =>
+            cbFilterCategory?.SelectedValue is int id ? id : 0;
+
+        // Tìm theo từ khóa (mã vạch/tên) và/hoặc danh mục bằng Query String:
+        //   GET api/products?keyword=abc&categoryId=3  (server lọc)
         private async Task SearchAsync()
         {
             string keyword = txtKeyword.Text.Trim();
+            int catId = SelectedFilterCategoryId();
+
             if (keyword.Length == 0)
             {
-                _current = _inventory; // ô tìm kiếm trống thì dùng luôn dữ liệu đã tải, đỡ gọi API
+                // Không có từ khóa: lọc ngay trên dữ liệu đã tải, đỡ gọi API
+                _current = catId > 0 ? _inventory.Where(p => p.CategoryId == catId).ToList() : _inventory;
                 ShowCurrent();
                 return;
             }
@@ -481,7 +514,10 @@ namespace MiniSupermarket.WinForms
             try
             {
                 // Uri.EscapeDataString: từ khóa có dấu/khoảng trắng/ký tự đặc biệt không bị lỗi URL
-                var result = await FetchProductsAsync("Tìm kiếm", $"products?keyword={Uri.EscapeDataString(keyword)}");
+                string url = $"products?keyword={Uri.EscapeDataString(keyword)}";
+                if (catId > 0) url += $"&categoryId={catId}";
+
+                var result = await FetchProductsAsync("Tìm kiếm", url);
                 if (result == null) return;
                 _current = result;
                 ShowCurrent();
@@ -490,6 +526,39 @@ namespace MiniSupermarket.WinForms
             {
                 SetBusy(false);
             }
+        }
+
+        // Tạo combo "Danh mục" và chèn vào thanh tìm kiếm (giữa ô từ khóa và nút Tìm kiếm)
+        private void BuildCategoryFilter()
+        {
+            cbFilterCategory = new ComboBox
+            {
+                Anchor = AnchorStyles.Left | AnchorStyles.Right,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Segoe UI", 10.5F),     // giống cbFilterRole ở form Tài khoản
+                Margin = new Padding(9, 4, 0, 4),       // giống cbFilterRole: cách ô từ khóa 9px
+                DropDownWidth = 320,                    // danh sách xổ rộng hơn để đọc hết tên danh mục dài
+                Name = "cbFilterCategory"
+            };
+            cbFilterCategory.DataSource = new List<CategoryDto> { new CategoryDto { CategoryId = 0, CategoryName = "Tất cả danh mục" } };
+            cbFilterCategory.DisplayMember = "CategoryName";
+            cbFilterCategory.ValueMember = "CategoryId";
+            cbFilterCategory.SelectedIndexChanged += async (s, e) =>
+            {
+                if (_suppressFilter) return;
+                await SearchAsync();
+            };
+
+            // Thêm cột thứ 2 (240px) cho combo; đẩy nút Tìm kiếm / Tải lại sang phải
+            tlpSearch.ColumnStyles.Clear();
+            tlpSearch.ColumnCount = 4;
+            tlpSearch.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpSearch.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190F));
+            tlpSearch.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 126F));
+            tlpSearch.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 114F));
+            tlpSearch.SetColumn(btnSearch, 2);
+            tlpSearch.SetColumn(btnLoad, 3);
+            tlpSearch.Controls.Add(cbFilterCategory, 1, 0);
         }
 
         #endregion
@@ -502,6 +571,9 @@ namespace MiniSupermarket.WinForms
         private async void btnLoad_Click(object? sender, EventArgs e)
         {
             txtKeyword.Clear();
+            _suppressFilter = true;
+            try { cbFilterCategory.SelectedValue = 0; }
+            finally { _suppressFilter = false; }
             await ReloadAllAsync();
         }
 

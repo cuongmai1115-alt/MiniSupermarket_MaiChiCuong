@@ -2,10 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniSupermarket.API.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MiniSupermarket.API.Controllers
 {
@@ -14,135 +10,204 @@ namespace MiniSupermarket.API.Controllers
     [Authorize(Roles = "Admin")] // Yêu cầu JWT Token có Role Admin
     public class ReportsController : ControllerBase
     {
-        private readonly SupermarketDbContext _db;
+        private const int LowStockThreshold = 20;   // trùng Product.IsLowStock
 
-        public ReportsController(SupermarketDbContext db)
-        {
-            _db = db;
-        }
+        private readonly SupermarketDbContext _db;
+        public ReportsController(SupermarketDbContext db) { _db = db; }
+
+        // GET api/reports/summary?fromDate=2026-10-01&toDate=2026-10-15
+        // Toàn bộ số liệu lấy từ bảng Orders / OrderDetails (dữ liệu thật, không còn random).
         [HttpGet("summary")]
         public async Task<IActionResult> GetSummary([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
         {
             var start = (fromDate ?? DateTime.Today).Date;
             var end = (toDate ?? DateTime.Today).Date;
-
             if (start > end)
-            {
-                return BadRequest("Ngày bắt đầu không được lớn hơn ngày kết thúc.");
-            }
+                return BadRequest(new { message = "Ngày bắt đầu không được lớn hơn ngày kết thúc." });
 
-            var products = await _db.Products.AsNoTracking().OrderBy(p => p.ProductId).ToListAsync();
+            var endExclusive = end.AddDays(1);
 
-            if (products.Count == 0)
-            {
-                return Ok(new
+            var orders = _db.Orders.AsNoTracking()
+                .Where(o => o.CreatedDate >= start && o.CreatedDate < endExclusive);
+            var details = _db.OrderDetails.AsNoTracking()
+                .Where(d => d.Order!.CreatedDate >= start && d.Order!.CreatedDate < endExclusive);
+
+            // --- 4 thẻ tổng quan ---
+            int totalOrders = await orders.CountAsync();
+            decimal totalRevenue = await orders.SumAsync(o => (decimal?)o.FinalAmount) ?? 0m;
+            int totalProductsSold = await details.SumAsync(d => (int?)d.Quantity) ?? 0;
+
+            // --- So sánh với kỳ trước (cùng số ngày, liền ngay trước kỳ này) ---
+            int days = (end - start).Days + 1;
+            var prevStart = start.AddDays(-days);
+            decimal previousRevenue = await _db.Orders.AsNoTracking()
+                .Where(o => o.CreatedDate >= prevStart && o.CreatedDate < start)
+                .SumAsync(o => (decimal?)o.FinalAmount) ?? 0m;
+            decimal? revenueChangePercent = previousRevenue > 0
+                ? Math.Round((totalRevenue - previousRevenue) / previousRevenue * 100m, 1)
+                : null;
+
+            // --- Top 5 bán chạy (theo số lượng, hòa thì xét doanh thu) ---
+            var topProducts = await details
+                .GroupBy(d => new { d.ProductId, d.Product!.ProductName })
+                .Select(g => new
                 {
-                    totalRevenue = 0m,
-                    totalOrders = 0,
-                    totalProductsSold = 0,
-                    topProducts = new List<object>()
-                });
-            }
-
-            decimal totalRevenue = 0;
-            int totalOrders = 0;
-            int totalProductsSold = 0;
-            var productSalesMap = new Dictionary<string, (int Qty, decimal Revenue)>();
-
-            for (var day = start; day <= end; day = day.AddDays(1))
-            {
-                var rnd = new Random(day.Year * 10000 + day.Month * 100 + day.Day);
-                int dayOrders = rnd.Next(20, 81);
-                totalOrders += dayOrders;
-
-                for (int i = 0; i < dayOrders; i++)
-                {
-                    int lines = rnd.Next(1, 5);
-                    for (int j = 0; j < lines; j++)
-                    {
-                        var p = products[rnd.Next(products.Count)];
-                        int qty = rnd.Next(1, 4);
-                        decimal lineTotal = p.Price * qty;
-
-                        totalRevenue += lineTotal;
-                        totalProductsSold += qty;
-
-                        if (!productSalesMap.ContainsKey(p.ProductName))
-                        {
-                            productSalesMap[p.ProductName] = (0, 0m);
-                        }
-
-                        var current = productSalesMap[p.ProductName];
-                        productSalesMap[p.ProductName] = (current.Qty + qty, current.Revenue + lineTotal);
-                    }
-                }
-            }
-
-            var topProducts = productSalesMap
-                .Select(kv => new
-                {
-                    productName = kv.Key,
-                    quantitySold = kv.Value.Qty,
-                    totalAmount = kv.Value.Revenue
+                    productName = g.Key.ProductName,
+                    quantitySold = g.Sum(x => x.Quantity),
+                    totalAmount = g.Sum(x => x.LineTotal)
                 })
                 .OrderByDescending(x => x.quantitySold)
+                .ThenByDescending(x => x.totalAmount)
                 .Take(5)
-                .ToList();
+                .ToListAsync();
+
+            // --- Doanh thu theo ngày (ngày không có đơn vẫn hiện 0 để biểu đồ liên tục) ---
+            var byDay = await orders
+                .GroupBy(o => o.CreatedDate.Date)
+                .Select(g => new { date = g.Key, orders = g.Count(), revenue = g.Sum(x => x.FinalAmount) })
+                .ToListAsync();
+
+            var dailyRevenue = new List<object>();
+            if (days <= 92)
+            {
+                var map = byDay.ToDictionary(x => x.date);
+                for (var day = start; day <= end; day = day.AddDays(1))
+                    dailyRevenue.Add(map.TryGetValue(day, out var v)
+                        ? new { date = day, v.orders, v.revenue }
+                        : new { date = day, orders = 0, revenue = 0m });
+            }
+            else
+            {
+                dailyRevenue.AddRange(byDay.OrderBy(x => x.date).Select(x => (object)x));
+            }
+
+            // --- Theo thu ngân ---
+            var byCashier = await orders
+                .GroupBy(o => o.CashierUsername)
+                .Select(g => new { cashier = g.Key, orders = g.Count(), revenue = g.Sum(x => x.FinalAmount) })
+                .OrderByDescending(x => x.revenue)
+                .ToListAsync();
+
+            // --- Theo nhóm hàng (kèm % đóng góp doanh thu) ---
+            var catRaw = await details
+                .GroupBy(d => d.Product!.Category!.CategoryName)
+                .Select(g => new { category = g.Key, quantity = g.Sum(x => x.Quantity), revenue = g.Sum(x => x.LineTotal) })
+                .OrderByDescending(x => x.revenue)
+                .ToListAsync();
+            decimal catTotal = catRaw.Sum(x => x.revenue);
+            var byCategory = catRaw.Select(x => new
+            {
+                x.category,
+                x.quantity,
+                x.revenue,
+                percent = catTotal > 0 ? Math.Round(x.revenue / catTotal * 100m, 1) : 0m
+            }).ToList();
+
+            // --- Hàng sắp hết (không phụ thuộc khoảng ngày) ---
+            var lowStockProducts = await _db.Products.AsNoTracking()
+                .Where(p => p.StockQuantity <= LowStockThreshold)
+                .OrderBy(p => p.StockQuantity).ThenBy(p => p.ProductName)
+                .Take(30)
+                .Select(p => new { productName = p.ProductName, stockQuantity = p.StockQuantity })
+                .ToListAsync();
 
             return Ok(new
             {
                 totalRevenue,
                 totalOrders,
                 totalProductsSold,
-                topProducts
+                previousRevenue,
+                revenueChangePercent,
+                topProducts,
+                dailyRevenue,
+                byCashier,
+                byCategory,
+                lowStockProducts
             });
         }
 
+        // GET api/reports/orders?fromDate=&toDate=  - danh sách hóa đơn trong kỳ (mới nhất trước, tối đa 300)
+        [HttpGet("orders")]
+        public async Task<IActionResult> GetOrders([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            var start = (fromDate ?? DateTime.Today).Date;
+            var end = (toDate ?? DateTime.Today).Date;
+            if (start > end)
+                return BadRequest(new { message = "Ngày bắt đầu không được lớn hơn ngày kết thúc." });
+            var endExclusive = end.AddDays(1);
+
+            var list = await _db.Orders.AsNoTracking()
+                .Where(o => o.CreatedDate >= start && o.CreatedDate < endExclusive)
+                .OrderByDescending(o => o.CreatedDate)
+                .Take(300)
+                .Select(o => new
+                {
+                    o.OrderId,
+                    o.OrderCode,
+                    o.CreatedDate,
+                    customerName = o.Customer!.CustomerName,
+                    cashier = o.CashierUsername,
+                    o.TotalItems,
+                    o.FinalAmount
+                })
+                .ToListAsync();
+            return Ok(list);
+        }
+
+        // GET api/reports/orders/5  - chi tiết 1 hóa đơn (các dòng hàng)
+        [HttpGet("orders/{id:int}")]
+        public async Task<IActionResult> GetOrderDetail(int id)
+        {
+            var o = await _db.Orders.AsNoTracking()
+                .Where(x => x.OrderId == id)
+                .Select(x => new
+                {
+                    x.OrderCode,
+                    x.CreatedDate,
+                    customerName = x.Customer!.CustomerName,
+                    cashier = x.CashierUsername,
+                    x.TotalItems,
+                    x.FinalAmount,
+                    x.RewardPoints,
+                    lines = x.OrderDetails.Select(d => new
+                    {
+                        productName = d.Product!.ProductName,
+                        d.Quantity,
+                        d.UnitPrice,
+                        d.LineTotal
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
+            if (o == null) return NotFound(new { message = "Không tìm thấy hóa đơn!" });
+            return Ok(o);
+        }
+
+        // GET api/reports/daily?date=2026-10-07  - báo cáo nhanh 1 ngày (dữ liệu thật)
         [HttpGet("daily")]
         public async Task<IActionResult> GetDaily([FromQuery] DateTime? date)
         {
             var day = (date ?? DateTime.Today).Date;
-            var products = await _db.Products.AsNoTracking().OrderBy(p => p.ProductId).ToListAsync();
+            var next = day.AddDays(1);
 
-            if (products.Count == 0)
-            {
-                return Ok(new
-                {
-                    date = day.ToString("yyyy-MM-dd"),
-                    totalOrders = 0,
-                    totalRevenue = 0m,
-                    bestSeller = "Chưa có dữ liệu",
-                    bestSellerQuantity = 0,
-                    isDemoData = true
-                });
-            }
+            var orders = _db.Orders.AsNoTracking().Where(o => o.CreatedDate >= day && o.CreatedDate < next);
+            int totalOrders = await orders.CountAsync();
+            decimal totalRevenue = await orders.SumAsync(o => (decimal?)o.FinalAmount) ?? 0m;
 
-            var rnd = new Random(day.Year * 10000 + day.Month * 100 + day.Day);
-            int totalOrders = rnd.Next(20, 81);
-            decimal totalRevenue = 0;
-            var soldQty = new Dictionary<string, int>();
+            var best = await _db.OrderDetails.AsNoTracking()
+                .Where(d => d.Order!.CreatedDate >= day && d.Order!.CreatedDate < next)
+                .GroupBy(d => d.Product!.ProductName)
+                .Select(g => new { name = g.Key, qty = g.Sum(x => x.Quantity) })
+                .OrderByDescending(x => x.qty)
+                .FirstOrDefaultAsync();
 
-            for (int i = 0; i < totalOrders; i++)
-            {
-                int lines = rnd.Next(1, 5);
-                for (int j = 0; j < lines; j++)
-                {
-                    var p = products[rnd.Next(products.Count)];
-                    int qty = rnd.Next(1, 4);
-                    totalRevenue += p.Price * qty;
-                    soldQty[p.ProductName] = soldQty.GetValueOrDefault(p.ProductName) + qty;
-                }
-            }
-
-            var best = soldQty.OrderByDescending(kv => kv.Value).First();
             return Ok(new
             {
                 date = day.ToString("yyyy-MM-dd"),
                 totalOrders,
                 totalRevenue,
-                bestSeller = best.Key,
-                bestSellerQuantity = best.Value,
-                isDemoData = true
+                bestSeller = best?.name ?? "Chưa có dữ liệu",
+                bestSellerQuantity = best?.qty ?? 0,
+                isDemoData = false
             });
         }
     }

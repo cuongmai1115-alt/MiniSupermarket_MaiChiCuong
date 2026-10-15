@@ -1,31 +1,88 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using MiniSupermarket.API.Models;
 
 namespace MiniSupermarket.API.Data
 {
     /// <summary>
-    /// DbContext - Cửa hàng Tiện lợi Alpha Mini
-    /// (Ứng dụng Thu ngân và Quản lý Hàng hóa cho Mô hình Bán lẻ)
+    /// DbContext - Cửa hàng Tiện lợi Alpha Mini (Ứng dụng Thu ngân và Quản lý Hàng hóa)
+    /// Quản lý 6 thực thể: Users, Categories, Products, Customers, Orders, OrderDetails.
     /// </summary>
     public class SupermarketDbContext : DbContext
     {
-        public SupermarketDbContext(
-            DbContextOptions<SupermarketDbContext> options
-        ) : base(options)
+        public SupermarketDbContext(DbContextOptions<SupermarketDbContext> options) : base(options)
         {
         }
 
-        public DbSet<Category> Categories { get; set; }
-        public DbSet<Product> Products { get; set; }
-        public DbSet<Customer> Customers { get; set; }
-        public DbSet<User> Users { get; set; }
+        // ---------- 6 BẢNG (DbSet) ----------
+        public DbSet<User> Users { get; set; }                   // Tài khoản nhân viên
+        public DbSet<Category> Categories { get; set; }          // Nhóm hàng
+        public DbSet<Product> Products { get; set; }             // Hàng hóa & tồn kho
+        public DbSet<Customer> Customers { get; set; }           // Khách hàng thân thiết
+        public DbSet<Order> Orders { get; set; }                 // Hóa đơn bán lẻ
+        public DbSet<OrderDetail> OrderDetails { get; set; }     // Chi tiết hóa đơn
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // =========================================================
-            // 1. NHÓM HÀNG - 15 DỮ LIỆU (mô hình cửa hàng tiện lợi)
+            // A. CẤU HÌNH RÀNG BUỘC (Unique Index, độ dài, giá trị mặc định)
+            // Phải khai báo TRƯỚC phần seed. Sau khi sửa phần này cần Add-Migration mới.
+            // =========================================================
+
+            // User: tên đăng nhập duy nhất
+            modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
+            modelBuilder.Entity<User>().Property(u => u.Username).HasMaxLength(50);
+            modelBuilder.Entity<User>().Property(u => u.Role).HasMaxLength(20);
+
+            // Category: tên nhóm hàng duy nhất
+            modelBuilder.Entity<Category>().HasIndex(c => c.CategoryName).IsUnique();
+
+            // Product: mã vạch duy nhất (quét tại quầy POS)
+            modelBuilder.Entity<Product>().HasIndex(p => p.Barcode).IsUnique();
+
+            // Customer: số điện thoại duy nhất (tra cứu tích điểm) + giá trị mặc định
+            modelBuilder.Entity<Customer>().HasIndex(c => c.PhoneNumber).IsUnique();
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.Property(c => c.RewardPoints).HasDefaultValue(0);
+                entity.Property(c => c.MembershipRank).HasDefaultValue("Chuẩn");
+            });
+
+            // Order: mã hóa đơn duy nhất (VD: HD20261001-001)
+            modelBuilder.Entity<Order>().HasIndex(o => o.OrderCode).IsUnique();
+
+            // =========================================================
+            // B. DATA SEEDING - THỨ TỰ: bảng cha trước, bảng con sau
+            // Users -> Categories -> Products -> Customers -> Orders -> OrderDetails
+            // (Products cần Categories; Orders cần Customers; OrderDetails cần Orders + Products)
+            // =========================================================
+
+            // =========================================================
+            // 1. USERS - 15 tài khoản (Admin / Cashier / Warehouse)
+            // Cashier01..06 được dùng ở cột CashierUsername của bảng Orders.
+            // =========================================================
+            modelBuilder.Entity<User>().HasData(
+                new User { Id = 1, Username = "admin01", Password = "123456", FullName = "Nguyễn Quản Trị", Role = "Admin", IsActive = true },
+                new User { Id = 2, Username = "admin02", Password = "123456", FullName = "Trần Giám Đốc", Role = "Admin", IsActive = true },
+                new User { Id = 3, Username = "cashier01", Password = "123456", FullName = "Lê Thu Ngân", Role = "Cashier", IsActive = true },
+                new User { Id = 4, Username = "cashier02", Password = "123456", FullName = "Phạm Bán Hàng", Role = "Cashier", IsActive = true },
+                new User { Id = 5, Username = "cashier03", Password = "123456", FullName = "Hoàng Thu Ngân", Role = "Cashier", IsActive = true },
+                new User { Id = 6, Username = "cashier04", Password = "123456", FullName = "Vũ Thị Quầy", Role = "Cashier", IsActive = true },
+                new User { Id = 7, Username = "cashier05", Password = "123456", FullName = "Đỗ Bán Lẻ", Role = "Cashier", IsActive = true },
+                new User { Id = 8, Username = "ware01", Password = "123456", FullName = "Ngô Quản Kho", Role = "Warehouse", IsActive = true },
+                new User { Id = 9, Username = "ware02", Password = "123456", FullName = "Bùi Kiểm Kê", Role = "Warehouse", IsActive = true },
+                new User { Id = 10, Username = "ware03", Password = "123456", FullName = "Dương Thủ Kho", Role = "Warehouse", IsActive = true },
+                new User { Id = 11, Username = "ware04", Password = "123456", FullName = "Lý Nhập Hàng", Role = "Warehouse", IsActive = true },
+                new User { Id = 12, Username = "admin_backup", Password = "123456", FullName = "Đặng Hỗ Trợ", Role = "Admin", IsActive = true },
+                new User { Id = 13, Username = "cashier06", Password = "123456", FullName = "Hồ Ca Chiều", Role = "Cashier", IsActive = true },
+                new User { Id = 14, Username = "ware05", Password = "123456", FullName = "Trương Vận Chuyển", Role = "Warehouse", IsActive = true },
+                new User { Id = 15, Username = "supervisor", Password = "123456", FullName = "Mai Giám Sát", Role = "Admin", IsActive = true }
+            );
+
+            // =========================================================
+            // 2. CATEGORIES - 15 nhóm hàng
             // =========================================================
             modelBuilder.Entity<Category>().HasData(
                 new Category
@@ -135,7 +192,8 @@ namespace MiniSupermarket.API.Data
             );
 
             // =========================================================
-            // 2. SẢN PHẨM - 45 DỮ LIỆU (3 sản phẩm / nhóm hàng)
+            // 3. PRODUCTS - 45 sản phẩm (3 sản phẩm / nhóm hàng)
+            // CategoryId phải nằm trong 1..15. Barcode không được trùng.
             // =========================================================
             modelBuilder.Entity<Product>().HasData(
                 // ----- NHÓM 1: NƯỚC GIẢI KHÁT -----
@@ -605,21 +663,8 @@ namespace MiniSupermarket.API.Data
             );
 
             // =========================================================
-            // 3. CẤU HÌNH KHÁCH HÀNG
-            // =========================================================
-            modelBuilder.Entity<Customer>(entity =>
-            {
-                entity.Property(c => c.RewardPoints)
-                    .HasDefaultValue(0);
-
-                entity.Property(c => c.MembershipRank)
-                    .HasDefaultValue("Chuẩn");
-            });
-
-            // =========================================================
-            // 4. KHÁCH HÀNG THÀNH VIÊN - 20 DỮ LIỆU
-            //    Địa chỉ theo đơn vị hành chính hiện hành (từ 01/07/2025):
-            //    không còn cấp Quận/Huyện, ghi: số nhà, đường, Phường, TP. Hồ Chí Minh
+            // 4. CUSTOMERS - 20 khách thành viên + 1 khách lẻ (Id 21)
+            // Địa chỉ theo đơn vị hành chính từ 01/07/2025 (không còn cấp Quận/Huyện).
             // =========================================================
             modelBuilder.Entity<Customer>().HasData(
                 new Customer
@@ -820,30 +865,77 @@ namespace MiniSupermarket.API.Data
                     Address = "120 Lê Văn Việt, Phường Tăng Nhơn Phú, TP. Hồ Chí Minh",
                     MembershipRank = "Vàng",
                     RewardPoints = 950
+                },
+
+                // Khách lẻ (không có thẻ thành viên): Orders.CustomerId bắt buộc nên hóa đơn của khách vãng lai gắn vào dòng này.
+                // OrdersController.Checkout dùng CustomerId = 21 này. KHÔNG xóa / đổi Id.
+                new Customer
+                {
+                    CustomerId = 21,
+                    CustomerName = "Khách lẻ",
+                    PhoneNumber = "0000000000",
+                    Address = null,
+                    MembershipRank = "Chuẩn",
+                    RewardPoints = 0
                 }
             );
-            modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
-            modelBuilder.Entity<User>().Property(u => u.Username).HasMaxLength(50);
-            modelBuilder.Entity<User>().Property(u => u.Role).HasMaxLength(20);
 
-            modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, Username = "admin01", Password = "123456", FullName = "Nguyễn Quản Trị", Role = "Admin", IsActive = true },
-                new User { Id = 2, Username = "admin02", Password = "123456", FullName = "Trần Giám Đốc", Role = "Admin", IsActive = true },
-                new User { Id = 3, Username = "cashier01", Password = "123456", FullName = "Lê Thu Ngân", Role = "Cashier", IsActive = true },
-                new User { Id = 4, Username = "cashier02", Password = "123456", FullName = "Phạm Bán Hàng", Role = "Cashier", IsActive = true },
-                new User { Id = 5, Username = "cashier03", Password = "123456", FullName = "Hoàng Thu Ngân", Role = "Cashier", IsActive = true },
-                new User { Id = 6, Username = "cashier04", Password = "123456", FullName = "Vũ Thị Quầy", Role = "Cashier", IsActive = true },
-                new User { Id = 7, Username = "cashier05", Password = "123456", FullName = "Đỗ Bán Lẻ", Role = "Cashier", IsActive = true },
-                new User { Id = 8, Username = "ware01", Password = "123456", FullName = "Ngô Quản Kho", Role = "Warehouse", IsActive = true },
-                new User { Id = 9, Username = "ware02", Password = "123456", FullName = "Bùi Kiểm Kê", Role = "Warehouse", IsActive = true },
-                new User { Id = 10, Username = "ware03", Password = "123456", FullName = "Dương Thủ Kho", Role = "Warehouse", IsActive = true },
-                new User { Id = 11, Username = "ware04", Password = "123456", FullName = "Lý Nhập Hàng", Role = "Warehouse", IsActive = true },
-                new User { Id = 12, Username = "admin_backup", Password = "123456", FullName = "Đặng Hỗ Trợ", Role = "Admin", IsActive = true },
-                new User { Id = 13, Username = "cashier06", Password = "123456", FullName = "Hồ Ca Chiều", Role = "Cashier", IsActive = true },
-                new User { Id = 14, Username = "ware05", Password = "123456", FullName = "Trương Vận Chuyển", Role = "Warehouse", IsActive = true },
-                new User { Id = 15, Username = "supervisor", Password = "123456", FullName = "Mai Giám Sát", Role = "Admin", IsActive = true }
+            // =========================================================
+            // 5. ORDERS - 15 hóa đơn (ngày 01-07/10/2026)
+            // CustomerId trong 1..20; CashierUsername là cashier01..06.
+            // TotalItems = tổng Quantity, FinalAmount = tổng LineTotal ở OrderDetails; điểm thưởng = FinalAmount / 10.000.
+            // =========================================================
+            modelBuilder.Entity<Order>().HasData(
+                    new Order { OrderId = 1, OrderCode = "HD20261001-001", CreatedDate = new DateTime(2026, 10, 1, 8, 30, 0), CustomerId = 1, CashierUsername = "cashier01", TotalItems = 3, FinalAmount = 62000m, RewardPoints = 6 },
+                    new Order { OrderId = 2, OrderCode = "HD20261001-002", CreatedDate = new DateTime(2026, 10, 1, 9, 15, 0), CustomerId = 2, CashierUsername = "cashier01", TotalItems = 2, FinalAmount = 36000m, RewardPoints = 3 },
+                    new Order { OrderId = 3, OrderCode = "HD20261001-003", CreatedDate = new DateTime(2026, 10, 1, 10, 0, 0), CustomerId = 3, CashierUsername = "cashier02", TotalItems = 10, FinalAmount = 50000m, RewardPoints = 5 },
+                    new Order { OrderId = 4, OrderCode = "HD20261002-001", CreatedDate = new DateTime(2026, 10, 2, 8, 45, 0), CustomerId = 4, CashierUsername = "cashier02", TotalItems = 4, FinalAmount = 144000m, RewardPoints = 14 },
+                    new Order { OrderId = 5, OrderCode = "HD20261002-002", CreatedDate = new DateTime(2026, 10, 2, 11, 20, 0), CustomerId = 5, CashierUsername = "cashier03", TotalItems = 5, FinalAmount = 68000m, RewardPoints = 6 },
+                    new Order { OrderId = 6, OrderCode = "HD20261003-001", CreatedDate = new DateTime(2026, 10, 3, 14, 10, 0), CustomerId = 6, CashierUsername = "cashier03", TotalItems = 3, FinalAmount = 42000m, RewardPoints = 4 },
+                    new Order { OrderId = 7, OrderCode = "HD20261003-002", CreatedDate = new DateTime(2026, 10, 3, 16, 40, 0), CustomerId = 7, CashierUsername = "cashier04", TotalItems = 5, FinalAmount = 30000m, RewardPoints = 3 },
+                    new Order { OrderId = 8, OrderCode = "HD20261004-001", CreatedDate = new DateTime(2026, 10, 4, 9, 5, 0), CustomerId = 8, CashierUsername = "cashier04", TotalItems = 2, FinalAmount = 103000m, RewardPoints = 10 },
+                    new Order { OrderId = 9, OrderCode = "HD20261004-002", CreatedDate = new DateTime(2026, 10, 4, 13, 30, 0), CustomerId = 9, CashierUsername = "cashier05", TotalItems = 3, FinalAmount = 35000m, RewardPoints = 3 },
+                    new Order { OrderId = 10, OrderCode = "HD20261005-001", CreatedDate = new DateTime(2026, 10, 5, 10, 50, 0), CustomerId = 10, CashierUsername = "cashier05", TotalItems = 4, FinalAmount = 124000m, RewardPoints = 12 },
+                    new Order { OrderId = 11, OrderCode = "HD20261005-002", CreatedDate = new DateTime(2026, 10, 5, 17, 15, 0), CustomerId = 11, CashierUsername = "cashier06", TotalItems = 3, FinalAmount = 36000m, RewardPoints = 3 },
+                    new Order { OrderId = 12, OrderCode = "HD20261006-001", CreatedDate = new DateTime(2026, 10, 6, 8, 20, 0), CustomerId = 12, CashierUsername = "cashier06", TotalItems = 3, FinalAmount = 82000m, RewardPoints = 8 },
+                    new Order { OrderId = 13, OrderCode = "HD20261006-002", CreatedDate = new DateTime(2026, 10, 6, 15, 0, 0), CustomerId = 13, CashierUsername = "cashier01", TotalItems = 3, FinalAmount = 74000m, RewardPoints = 7 },
+                    new Order { OrderId = 14, OrderCode = "HD20261007-001", CreatedDate = new DateTime(2026, 10, 7, 12, 10, 0), CustomerId = 14, CashierUsername = "cashier02", TotalItems = 1, FinalAmount = 58000m, RewardPoints = 5 },
+                    new Order { OrderId = 15, OrderCode = "HD20261007-002", CreatedDate = new DateTime(2026, 10, 7, 18, 45, 0), CustomerId = 15, CashierUsername = "cashier03", TotalItems = 3, FinalAmount = 40000m, RewardPoints = 4 }
             );
 
+            // =========================================================
+            // 6. ORDERDETAILS - 26 dòng chi tiết
+            // OrderId trong 1..15, ProductId lấy từ bảng Products; UnitPrice = giá hiện tại của sản phẩm;
+            // LineTotal = Quantity * UnitPrice.
+            // =========================================================
+            modelBuilder.Entity<OrderDetail>().HasData(
+                    new OrderDetail { OrderDetailId = 1, OrderId = 1, ProductId = 1, Quantity = 1, UnitPrice = 12000m, LineTotal = 12000m },
+                    new OrderDetail { OrderDetailId = 2, OrderId = 1, ProductId = 7, Quantity = 1, UnitPrice = 14000m, LineTotal = 14000m },
+                    new OrderDetail { OrderDetailId = 3, OrderId = 1, ProductId = 4, Quantity = 1, UnitPrice = 36000m, LineTotal = 36000m },
+                    new OrderDetail { OrderDetailId = 4, OrderId = 2, ProductId = 8, Quantity = 1, UnitPrice = 24000m, LineTotal = 24000m },
+                    new OrderDetail { OrderDetailId = 5, OrderId = 2, ProductId = 1, Quantity = 1, UnitPrice = 12000m, LineTotal = 12000m },
+                    new OrderDetail { OrderDetailId = 6, OrderId = 3, ProductId = 10, Quantity = 10, UnitPrice = 5000m, LineTotal = 50000m },
+                    new OrderDetail { OrderDetailId = 7, OrderId = 4, ProductId = 4, Quantity = 4, UnitPrice = 36000m, LineTotal = 144000m },
+                    new OrderDetail { OrderDetailId = 8, OrderId = 5, ProductId = 4, Quantity = 1, UnitPrice = 36000m, LineTotal = 36000m },
+                    new OrderDetail { OrderDetailId = 9, OrderId = 5, ProductId = 5, Quantity = 4, UnitPrice = 8000m, LineTotal = 32000m },
+                    new OrderDetail { OrderDetailId = 10, OrderId = 6, ProductId = 9, Quantity = 2, UnitPrice = 18000m, LineTotal = 36000m },
+                    new OrderDetail { OrderDetailId = 11, OrderId = 6, ProductId = 3, Quantity = 1, UnitPrice = 6000m, LineTotal = 6000m },
+                    new OrderDetail { OrderDetailId = 12, OrderId = 7, ProductId = 3, Quantity = 5, UnitPrice = 6000m, LineTotal = 30000m },
+                    new OrderDetail { OrderDetailId = 13, OrderId = 8, ProductId = 26, Quantity = 1, UnitPrice = 58000m, LineTotal = 58000m },
+                    new OrderDetail { OrderDetailId = 14, OrderId = 8, ProductId = 25, Quantity = 1, UnitPrice = 45000m, LineTotal = 45000m },
+                    new OrderDetail { OrderDetailId = 15, OrderId = 9, ProductId = 24, Quantity = 1, UnitPrice = 11000m, LineTotal = 11000m },
+                    new OrderDetail { OrderDetailId = 16, OrderId = 9, ProductId = 22, Quantity = 2, UnitPrice = 12000m, LineTotal = 24000m },
+                    new OrderDetail { OrderDetailId = 17, OrderId = 10, ProductId = 8, Quantity = 2, UnitPrice = 24000m, LineTotal = 48000m },
+                    new OrderDetail { OrderDetailId = 18, OrderId = 10, ProductId = 38, Quantity = 2, UnitPrice = 38000m, LineTotal = 76000m },
+                    new OrderDetail { OrderDetailId = 19, OrderId = 11, ProductId = 11, Quantity = 3, UnitPrice = 12000m, LineTotal = 36000m },
+                    new OrderDetail { OrderDetailId = 20, OrderId = 12, ProductId = 13, Quantity = 2, UnitPrice = 35000m, LineTotal = 70000m },
+                    new OrderDetail { OrderDetailId = 21, OrderId = 12, ProductId = 1, Quantity = 1, UnitPrice = 12000m, LineTotal = 12000m },
+                    new OrderDetail { OrderDetailId = 22, OrderId = 13, ProductId = 34, Quantity = 1, UnitPrice = 34000m, LineTotal = 34000m },
+                    new OrderDetail { OrderDetailId = 23, OrderId = 13, ProductId = 16, Quantity = 2, UnitPrice = 20000m, LineTotal = 40000m },
+                    new OrderDetail { OrderDetailId = 24, OrderId = 14, ProductId = 26, Quantity = 1, UnitPrice = 58000m, LineTotal = 58000m },
+                    new OrderDetail { OrderDetailId = 25, OrderId = 15, ProductId = 7, Quantity = 2, UnitPrice = 14000m, LineTotal = 28000m },
+                    new OrderDetail { OrderDetailId = 26, OrderId = 15, ProductId = 1, Quantity = 1, UnitPrice = 12000m, LineTotal = 12000m }
+            );
         }
     }
 }
