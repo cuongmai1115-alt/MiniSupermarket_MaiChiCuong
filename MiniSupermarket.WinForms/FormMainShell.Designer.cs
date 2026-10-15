@@ -208,7 +208,7 @@
             // 
             // btnLogout
             // 
-            btnLogout.BackColor = Color.FromArgb(192, 57, 43);
+            //btnLogout.BackColor = Color.FromArgb(192, 57, 43);
             btnLogout.Cursor = Cursors.Hand;
             btnLogout.Dock = DockStyle.Fill;
             btnLogout.FlatAppearance.BorderSize = 0;
