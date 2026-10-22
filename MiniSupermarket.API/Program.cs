@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using MiniSupermarket.API.Data;
@@ -61,6 +61,17 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// CẤU HÌNH CORS (Cross-Origin Resource Sharing)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -70,6 +81,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Kích hoạt Middleware CORS (phải đặt trước Authentication và Authorization)
+app.UseCors("AllowAll");
 
 // Bắt buộc gọi UseAuthentication trước UseAuthorization
 app.UseAuthentication();

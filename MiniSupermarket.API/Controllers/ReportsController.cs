@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using MiniSupermarket.API.Data;
+using MiniSupermarket.API.Models;
+using System.Data;
 
 namespace MiniSupermarket.API.Controllers
 {
@@ -13,7 +16,13 @@ namespace MiniSupermarket.API.Controllers
         private const int LowStockThreshold = 20;   // trùng Product.IsLowStock
 
         private readonly SupermarketDbContext _db;
-        public ReportsController(SupermarketDbContext db) { _db = db; }
+        private readonly IConfiguration _configuration;
+
+        public ReportsController(SupermarketDbContext db, IConfiguration configuration)
+        {
+            _db = db;
+            _configuration = configuration;
+        }
 
         // GET api/reports/summary?fromDate=2026-10-01&toDate=2026-10-15
         // Toàn bộ số liệu lấy từ bảng Orders / OrderDetails (dữ liệu thật, không còn random).
@@ -208,6 +217,111 @@ namespace MiniSupermarket.API.Controllers
                 bestSeller = best?.name ?? "Chưa có dữ liệu",
                 bestSellerQuantity = best?.qty ?? 0,
                 isDemoData = false
+            });
+        }
+        // BUỔI 5 - TIẾT 3: BÁO CÁO DOANH THU CA BÁN LẺ (STORED PROCEDURE)
+        // GET: api/reports/revenue-by-cashier
+        // Chức năng: Gọi Stored Procedure sp_GetRevenueByCashier qua SqlDataReader
+
+        [HttpGet("revenue-by-cashier")]
+        [AllowAnonymous] // Cho phép kiểm thử trực tiếp trên Swagger UI theo yêu cầu Tiết 3
+        public IActionResult GetRevenueByCashier()
+        {
+            var reportList = new List<CashierRevenueDto>();
+            string connectionString = _configuration.GetConnectionString("DefaultConnection")!;
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using (SqlCommand command = new SqlCommand("sp_GetRevenueByCashier", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    try
+                    {
+                        connection.Open();
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var item = new CashierRevenueDto
+                                {
+                                    CashierUsername = reader["CashierUsername"].ToString() ?? string.Empty,
+                                    TotalOrders = Convert.ToInt32(reader["TotalOrders"]),
+                                    TotalRevenue = Convert.ToDecimal(reader["TotalRevenue"]),
+                                    TotalPointsAwarded = reader["TotalPointsAwarded"] != DBNull.Value
+                                        ? Convert.ToInt32(reader["TotalPointsAwarded"])
+                                        : 0
+                                };
+
+                                reportList.Add(item);
+                            }
+                        }
+                    }
+                    catch (SqlException ex)
+                    {
+                        return StatusCode(500, new
+                        {
+                            success = false,
+                            message = "Lỗi thực thi Stored Procedure trên SQL Server: " + ex.Message
+                        });
+                    }
+                }
+            }
+
+            return Ok(new
+            {
+                success = true,
+                generatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                totalCashiers = reportList.Count,
+                grandTotalRevenue = reportList.Sum(x => x.TotalRevenue),
+                data = reportList
+            });
+        }
+
+        [HttpGet("revenue-by-date-range")]
+        [AllowAnonymous]
+        public IActionResult GetRevenueByDateRange([FromQuery] DateTime fromDate, [FromQuery] DateTime toDate)
+        {
+            var reportList = new List<object>();
+            string connectionString = _configuration.GetConnectionString("DefaultConnection")!;
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using (SqlCommand command = new SqlCommand("sp_GetRevenueByDateRange", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@FromDate", fromDate);
+                    command.Parameters.AddWithValue("@ToDate", toDate.Date.AddDays(1).AddSeconds(-1));
+
+                    try
+                    {
+                        connection.Open();
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                reportList.Add(new
+                                {
+                                    cashierUsername = reader["CashierUsername"].ToString() ?? string.Empty,
+                                    totalOrders = Convert.ToInt32(reader["TotalOrders"]),
+                                    totalRevenue = Convert.ToDecimal(reader["TotalRevenue"])
+                                });
+                            }
+                        }
+                    }
+                    catch (SqlException ex)
+                    {
+                        return StatusCode(500, new { success = false, message = "Lỗi SQL: " + ex.Message });
+                    }
+                }
+            }
+
+            return Ok(new
+            {
+                success = true,
+                fromDate = fromDate.ToString("yyyy-MM-dd"),
+                toDate = toDate.ToString("yyyy-MM-dd"),
+                data = reportList
             });
         }
     }

@@ -20,7 +20,14 @@ namespace MiniSupermarket.API.Controllers
         public async Task<IActionResult> GetAll()
         {
             var list = await _db.Users.AsNoTracking().OrderBy(u => u.Id)
-                .Select(u => new { u.Id, u.Username, u.FullName, u.Role, u.IsActive })
+                .Select(u => new UserResponseDto
+                {
+                    Id = u.Id,
+                    Username = u.Username,
+                    FullName = u.FullName,
+                    Role = u.Role,
+                    IsActive = u.IsActive
+                })
                 .ToListAsync();
             return Ok(list);
         }
@@ -116,5 +123,14 @@ namespace MiniSupermarket.API.Controllers
     public class ResetPasswordRequest
     {
         public string NewPassword { get; set; } = string.Empty;
+    }
+
+    public class UserResponseDto
+    {
+        public int Id { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
     }
 }
