@@ -27,6 +27,16 @@ namespace MiniSupermarket.WinForms
         private bool _suppressFilter;                  // true khi đang nạp lại combo, tránh tự kích hoạt tìm kiếm
         private int _busyCount; // đếm số request đang chạy để khóa/mở nút đúng lúc
 
+        // Điều khiển phân trang (Buổi 6)
+        private Button btnPrev = null!;
+        private Button btnNext = null!;
+        private Label lblPaging = null!;
+        private Panel pnlPaging = null!;
+        private int _currentPage = 1;
+        private readonly int _pageSize = 5;
+        private int _totalPages = 1;
+        private int _totalItems = 0;
+
         // Server chỉ cho Admin và Warehouse thêm/sửa/xóa (xem ProductsController); vai trò khác chỉ được xem
         private static bool CanEdit =>
             string.Equals(SessionManager.CurrentRole, "Admin", StringComparison.OrdinalIgnoreCase) ||
@@ -36,6 +46,7 @@ namespace MiniSupermarket.WinForms
         {
             InitializeComponent();
             SetupGrid();
+            BuildPagingControls();
 
             // Gõ lại vào ô nào thì xóa dấu ! đỏ của ô đó
             txtBarcode.TextChanged += (s, e) => errorProvider1.SetError(txtBarcode, string.Empty);
@@ -61,13 +72,14 @@ namespace MiniSupermarket.WinForms
         {
             ApplyRolePermissions();
             await LoadCategoriesAsync();
-            await ReloadAllAsync();
+            await LoadProductsPagedAsync();
         }
 
         #region Giao diện lưới
 
         private void SetupGrid()
         {
+            dgvProducts.AutoGenerateColumns = false;
             dgvProducts.RowHeadersVisible = false;
             dgvProducts.BackgroundColor = Color.White;
             dgvProducts.BorderStyle = BorderStyle.None;
@@ -315,6 +327,8 @@ namespace MiniSupermarket.WinForms
             foreach (var b in new[] { btnAdd, btnUpdate, btnDelete })
                 b.Enabled = idle && CanEdit;
             cbFilterCategory.Enabled = idle;
+            if (btnPrev != null) btnPrev.Enabled = idle && _currentPage > 1;
+            if (btnNext != null) btnNext.Enabled = idle && _currentPage < _totalPages;
             UseWaitCursor = !idle;
         }
 
@@ -495,37 +509,11 @@ namespace MiniSupermarket.WinForms
         private int SelectedFilterCategoryId() =>
             cbFilterCategory?.SelectedValue is int id ? id : 0;
 
-        // Tìm theo từ khóa (mã vạch/tên) và/hoặc danh mục bằng Query String:
-        //   GET api/products?keyword=abc&categoryId=3  (server lọc)
+        // Tìm theo từ khóa (mã vạch/tên) và/hoặc danh mục qua API phân trang (Buổi 6)
         private async Task SearchAsync()
         {
-            string keyword = txtKeyword.Text.Trim();
-            int catId = SelectedFilterCategoryId();
-
-            if (keyword.Length == 0)
-            {
-                // Không có từ khóa: lọc ngay trên dữ liệu đã tải, đỡ gọi API
-                _current = catId > 0 ? _inventory.Where(p => p.CategoryId == catId).ToList() : _inventory;
-                ShowCurrent();
-                return;
-            }
-
-            SetBusy(true);
-            try
-            {
-                // Uri.EscapeDataString: từ khóa có dấu/khoảng trắng/ký tự đặc biệt không bị lỗi URL
-                string url = $"products?keyword={Uri.EscapeDataString(keyword)}";
-                if (catId > 0) url += $"&categoryId={catId}";
-
-                var result = await FetchProductsAsync("Tìm kiếm", url);
-                if (result == null) return;
-                _current = result;
-                ShowCurrent();
-            }
-            finally
-            {
-                SetBusy(false);
-            }
+            _currentPage = 1;
+            await LoadProductsPagedAsync();
         }
 
         // Tạo combo "Danh mục" và chèn vào thanh tìm kiếm (giữa ô từ khóa và nút Tìm kiếm)
@@ -567,14 +555,15 @@ namespace MiniSupermarket.WinForms
 
         private async void btnSearch_Click(object? sender, EventArgs e) => await SearchAsync();
 
-        // Nút TẢI LẠI: xóa từ khóa rồi tải lại toàn bộ
+        // Nút TẢI LẠI: xóa từ khóa rồi tải lại trang 1
         private async void btnLoad_Click(object? sender, EventArgs e)
         {
             txtKeyword.Clear();
             _suppressFilter = true;
             try { cbFilterCategory.SelectedValue = 0; }
             finally { _suppressFilter = false; }
-            await ReloadAllAsync();
+            _currentPage = 1;
+            await LoadProductsPagedAsync();
         }
 
         private void dgvProducts_CellClick(object? sender, DataGridViewCellEventArgs e)
@@ -615,7 +604,7 @@ namespace MiniSupermarket.WinForms
                 }
                 string addedName = newProduct.ProductName;
                 ClearInput();
-                await ReloadAllAsync();
+                await LoadProductsPagedAsync();
                 SetStatus("Thêm sản phẩm thành công!", StatusKind.Success);
                 MessageBox.Show($"Đã thêm sản phẩm \"{addedName}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -659,7 +648,7 @@ namespace MiniSupermarket.WinForms
                 }
                 string updatedName = updateProduct.ProductName;
                 ClearInput();
-                await ReloadAllAsync();
+                await LoadProductsPagedAsync();
                 SetStatus("Cập nhật sản phẩm thành công!", StatusKind.Success);
                 MessageBox.Show($"Đã cập nhật sản phẩm \"{updatedName}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -696,7 +685,8 @@ namespace MiniSupermarket.WinForms
                     return;
                 }
                 ClearInput();
-                await ReloadAllAsync();
+                if (_current.Count == 1 && _currentPage > 1) _currentPage--;
+                await LoadProductsPagedAsync();
                 SetStatus($"Đã xóa sản phẩm \"{name}\".", StatusKind.Success);
                 MessageBox.Show($"Đã xóa sản phẩm \"{name}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -717,5 +707,156 @@ namespace MiniSupermarket.WinForms
         }
 
         #endregion
+
+        #region Điều khiển phân trang (Buổi 6)
+
+        private void BuildPagingControls()
+        {
+            pnlPaging = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 44,
+                BackColor = Color.White,
+                Padding = new Padding(4, 4, 4, 4)
+            };
+
+            var tlp = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 3,
+                RowCount = 1,
+                BackColor = Color.White
+            };
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
+
+            btnPrev = new Button
+            {
+                Text = "<< Trang trước",
+                Anchor = AnchorStyles.Left,
+                Size = new Size(130, 32),
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                BackColor = Color.FromArgb(243, 244, 246),
+                ForeColor = Color.FromArgb(31, 41, 55),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Enabled = false
+            };
+            btnPrev.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
+            btnPrev.Click += btnPrev_Click;
+
+            lblPaging = new Label
+            {
+                Text = "Trang 1 / 1 (Tổng: 0 SP)",
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(31, 41, 55)
+            };
+
+            btnNext = new Button
+            {
+                Text = "Trang sau >>",
+                Anchor = AnchorStyles.Right,
+                Size = new Size(130, 32),
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                BackColor = Color.FromArgb(243, 244, 246),
+                ForeColor = Color.FromArgb(31, 41, 55),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Enabled = false
+            };
+            btnNext.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
+            btnNext.Click += btnNext_Click;
+
+            tlp.Controls.Add(btnPrev, 0, 0);
+            tlp.Controls.Add(lblPaging, 1, 0);
+            tlp.Controls.Add(btnNext, 2, 0);
+
+            pnlPaging.Controls.Add(tlp);
+
+            groupBox2.Controls.Add(pnlPaging);
+            lblStatus.SendToBack();
+            pnlPaging.BringToFront();
+            dgvProducts.BringToFront();
+        }
+
+        private async void btnPrev_Click(object? sender, EventArgs e)
+        {
+            if (_currentPage > 1)
+            {
+                _currentPage--;
+                await LoadProductsPagedAsync();
+            }
+        }
+
+        private async void btnNext_Click(object? sender, EventArgs e)
+        {
+            if (_currentPage < _totalPages)
+            {
+                _currentPage++;
+                await LoadProductsPagedAsync();
+            }
+        }
+
+        private async Task LoadProductsPagedAsync()
+        {
+            string keyword = txtKeyword.Text.Trim();
+            int catId = SelectedFilterCategoryId();
+
+            SetBusy(true);
+            try
+            {
+                var url = $"products/paged?pageNumber={_currentPage}&pageSize={_pageSize}";
+                if (!string.IsNullOrWhiteSpace(keyword))
+                    url += $"&keyword={Uri.EscapeDataString(keyword)}";
+                if (catId > 0)
+                    url += $"&categoryId={catId}";
+
+                using var response = await ApiClientService.Client.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                {
+                    await ShowApiErrorAsync("Tải trang sản phẩm", response);
+                    return;
+                }
+
+                var pagedData = await response.Content.ReadFromJsonAsync<PagedViewResult<ProductDto>>();
+                if (pagedData == null) return;
+
+                _currentPage = pagedData.CurrentPage;
+                _totalPages = Math.Max(1, pagedData.TotalPages);
+                _totalItems = pagedData.TotalItems;
+                _current = pagedData.Items ?? new List<ProductDto>();
+
+                dgvProducts.DataSource = _current.ToList();
+                dgvProducts.ClearSelection();
+
+                lblPaging.Text = $"Trang {_currentPage} / {_totalPages} (Tổng: {_totalItems} SP)";
+                SetStatus($"Đã tải trang {_currentPage}/{_totalPages} (Tổng: {_totalItems} sản phẩm)", StatusKind.Info);
+
+                btnPrev.Enabled = _currentPage > 1;
+                btnNext.Enabled = _currentPage < _totalPages;
+            }
+            catch (Exception ex)
+            {
+                ShowException("Tải trang sản phẩm", ex);
+            }
+            finally
+            {
+                SetBusy(false);
+            }
+        }
+
+        #endregion
+    }
+
+    public class PagedViewResult<T>
+    {
+        public int CurrentPage { get; set; }
+        public int PageSize { get; set; }
+        public int TotalItems { get; set; }
+        public int TotalPages { get; set; }
+        public List<T> Items { get; set; } = new();
     }
 }
