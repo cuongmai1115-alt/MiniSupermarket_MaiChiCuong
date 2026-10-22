@@ -222,7 +222,6 @@
             lblHint.Name = "lblHint";
             lblHint.Size = new Size(796, 32);
             lblHint.TabIndex = 3;
-            lblHint.Text = "F2: ô quét mã   •   F9: thanh toán   •   + / -: đổi số lượng   •   Delete: xóa dòng";
             lblHint.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // pnlGap
