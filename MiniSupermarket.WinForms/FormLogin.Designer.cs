@@ -44,7 +44,8 @@
             // lblUser
             // 
             lblUser.AutoSize = true;
-            lblUser.Location = new Point(209, 85);
+            lblUser.Location = new Point(251, 132);
+            lblUser.Anchor = AnchorStyles.None;
             lblUser.Name = "lblUser";
             lblUser.Size = new Size(60, 15);
             lblUser.TabIndex = 0;
@@ -53,7 +54,8 @@
             // lblPass
             // 
             lblPass.AutoSize = true;
-            lblPass.Location = new Point(209, 128);
+            lblPass.Location = new Point(251, 175);
+            lblPass.Anchor = AnchorStyles.None;
             lblPass.Name = "lblPass";
             lblPass.Size = new Size(60, 15);
             lblPass.TabIndex = 1;
@@ -61,14 +63,16 @@
             // 
             // txtUser
             // 
-            txtUser.Location = new Point(275, 85);
+            txtUser.Location = new Point(317, 132);
+            txtUser.Anchor = AnchorStyles.None;
             txtUser.Name = "txtUser";
             txtUser.Size = new Size(180, 23);
             txtUser.TabIndex = 0;
             // 
             // txtPass
             // 
-            txtPass.Location = new Point(275, 128);
+            txtPass.Location = new Point(317, 175);
+            txtPass.Anchor = AnchorStyles.None;
             txtPass.Name = "txtPass";
             txtPass.Size = new Size(180, 23);
             txtPass.TabIndex = 1;
@@ -76,7 +80,8 @@
             // 
             // btnLogin
             // 
-            btnLogin.Location = new Point(275, 171);
+            btnLogin.Location = new Point(317, 218);
+            btnLogin.Anchor = AnchorStyles.None;
             btnLogin.Name = "btnLogin";
             btnLogin.Size = new Size(180, 35);
             btnLogin.TabIndex = 2;
@@ -87,7 +92,8 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(287, 42);
+            label1.Location = new Point(306, 89);
+            label1.Anchor = AnchorStyles.None;
             label1.Name = "label1";
             label1.Size = new Size(138, 15);
             label1.TabIndex = 3;
@@ -106,6 +112,7 @@
             Controls.Add(txtPass);
             Controls.Add(btnLogin);
             Name = "FormLogin";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Đăng nhập hệ thống";
             Load += FormLogin_Load;
             ResumeLayout(false);

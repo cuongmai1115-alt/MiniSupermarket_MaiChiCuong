@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniSupermarket.API.Data;
@@ -19,15 +19,22 @@ namespace MiniSupermarket.API.Controllers
             _context = context;
         }
 
-        // 1. READ: Lấy toàn bộ danh mục từ SQL Server
+        // 1. READ: Lấy toàn bộ danh mục từ SQL Server (Trả về DTO, không trả nguyên Entity)
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var list = await _context.Categories.AsNoTracking().ToListAsync();
+            var list = await _context.Categories.AsNoTracking()
+                .Select(c => new CategoryResponseDto
+                {
+                    CategoryId = c.CategoryId,
+                    CategoryName = c.CategoryName,
+                    Description = c.Description
+                })
+                .ToListAsync();
             return Ok(list);
         }
 
-        // 2. READ: Lấy chi tiết 1 danh mục theo ID
+        // 2. READ: Lấy chi tiết 1 danh mục theo ID (Trả về DTO)
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -36,10 +43,17 @@ namespace MiniSupermarket.API.Controllers
             {
                 return NotFound(new { message = "Không tìm thấy nhóm hàng trong CSDL!" });
             }
-            return Ok(category);
+
+            var dto = new CategoryResponseDto
+            {
+                CategoryId = category.CategoryId,
+                CategoryName = category.CategoryName,
+                Description = category.Description
+            };
+            return Ok(dto);
         }
 
-        // 3. SEARCH: Tìm kiếm qua Query String trên SQL Server
+        // 3. SEARCH: Tìm kiếm qua Query String trên SQL Server (Trả về DTO)
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] string keyword)
         {
@@ -47,42 +61,67 @@ namespace MiniSupermarket.API.Controllers
             {
                 return BadRequest(new { message = "Vui lòng nhập từ khóa tìm kiếm!" });
             }
-            // EF Core dịch biểu thức LINQ thành câu lệnh SQL LIKE tương ứng
-            var result = await _context.Categories
+
+            var result = await _context.Categories.AsNoTracking()
                 .Where(c => c.CategoryName.Contains(keyword))
+                .Select(c => new CategoryResponseDto
+                {
+                    CategoryId = c.CategoryId,
+                    CategoryName = c.CategoryName,
+                    Description = c.Description
+                })
                 .ToListAsync();
+
             return Ok(result);
         }
 
-        // 4. CREATE: Thêm mới nhóm hàng vào Database
+        // 4. CREATE: Thêm mới nhóm hàng vào Database (Nhận DTO, Trả DTO)
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([FromBody] Category newCat)
+        public async Task<IActionResult> Create([FromBody] CategoryRequestDto newCat)
         {
-            if (!ModelState.IsValid)
+            if (string.IsNullOrWhiteSpace(newCat.CategoryName))
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { message = "Tên nhóm hàng không được để trống!" });
             }
 
-            _context.Categories.Add(newCat);
+            var category = new Category
+            {
+                CategoryName = newCat.CategoryName.Trim(),
+                Description = newCat.Description?.Trim()
+            };
+
+            _context.Categories.Add(category);
             await _context.SaveChangesAsync(); // Lưu thay đổi vào SQL Server
 
-            return CreatedAtAction(nameof(GetById), new { id = newCat.CategoryId }, newCat);
+            var responseDto = new CategoryResponseDto
+            {
+                CategoryId = category.CategoryId,
+                CategoryName = category.CategoryName,
+                Description = category.Description
+            };
+
+            return CreatedAtAction(nameof(GetById), new { id = category.CategoryId }, responseDto);
         }
 
-        // 5. UPDATE: Cập nhật nhóm hàng vào Database
+        // 5. UPDATE: Cập nhật nhóm hàng vào Database (Nhận DTO)
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Update(int id, [FromBody] Category updateCat)
+        public async Task<IActionResult> Update(int id, [FromBody] CategoryRequestDto updateCat)
         {
+            if (string.IsNullOrWhiteSpace(updateCat.CategoryName))
+            {
+                return BadRequest(new { message = "Tên nhóm hàng không được để trống!" });
+            }
+
             var cat = await _context.Categories.FindAsync(id);
             if (cat == null)
             {
                 return NotFound(new { message = "Không tìm thấy nhóm hàng cần sửa!" });
             }
 
-            cat.CategoryName = updateCat.CategoryName;
-            cat.Description = updateCat.Description;
+            cat.CategoryName = updateCat.CategoryName.Trim();
+            cat.Description = updateCat.Description?.Trim();
 
             await _context.SaveChangesAsync();
             return NoContent();
@@ -103,6 +142,7 @@ namespace MiniSupermarket.API.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
         // 7. Kiểm tra quyền Admin (Chỉ tài khoản có Role = Admin mới được gọi)
         [HttpGet("admin-dashboard")]
         [Authorize(Roles = "Admin")]
@@ -118,5 +158,19 @@ namespace MiniSupermarket.API.Controllers
         {
             return Ok(new { message = "Màn hình POS Thu ngân sẵn sàng phục vụ bán hàng." });
         }
+    }
+
+    // ================= DTO CLASSES CHO CATEGORY =================
+    public class CategoryResponseDto
+    {
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
+        public string? Description { get; set; }
+    }
+
+    public class CategoryRequestDto
+    {
+        public string CategoryName { get; set; } = string.Empty;
+        public string? Description { get; set; }
     }
 }

@@ -15,14 +15,14 @@ namespace MiniSupermarket.API.Controllers
         public ProductsController(SupermarketDbContext db) { _db = db; }
 
         // Trả về dạng phẳng (có CategoryName) để WinForms hiển thị thẳng lên lưới
-        private IQueryable<object> Project(IQueryable<Product> q) => q.Select(p => (object)new
+        private IQueryable<ProductResponseDto> Project(IQueryable<Product> q) => q.Select(p => new ProductResponseDto
         {
-            p.ProductId,
-            p.Barcode,
-            p.ProductName,
-            p.Price,
-            p.StockQuantity,
-            p.CategoryId,
+            ProductId = p.ProductId,
+            Barcode = p.Barcode,
+            ProductName = p.ProductName,
+            Price = p.Price,
+            StockQuantity = p.StockQuantity,
+            CategoryId = p.CategoryId,
             CategoryName = p.Category != null ? p.Category.CategoryName : ""
         });
 
@@ -124,5 +124,16 @@ namespace MiniSupermarket.API.Controllers
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
         public int CategoryId { get; set; }
+    }
+
+    public class ProductResponseDto
+    {
+        public int ProductId { get; set; }
+        public string Barcode { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int StockQuantity { get; set; }
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
     }
 }
