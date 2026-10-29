@@ -158,7 +158,8 @@ Sau buổi thực hành, các nội dung kiến thức chính được hệ th�
 Qua Buổi 5 – Tiết 1, sinh viên tìm hiểu kiến trúc ADO.NET và vai trò của các thành phần thường dùng khi ứng dụng C# làm việc với SQL Server. Nội dung thực hành tập trung vào ba nhóm công việc: thống kê tổng số mặt hàng, cập nhật số lượng tồn kho và đọc danh sách sản phẩm.
 
 Bên cạnh thao tác dữ liệu, buổi học cũng nhấn mạnh việc cấu hình kết nối chính xác, quản lý tài nguyên hợp lý và sử dụng tham số SQL để hạn chế nguy cơ bảo mật. Đây là những kiến thức nền tảng cần thiết để xây dựng các chức năng quản lý hàng hóa và hỗ trợ nghiệp vụ bán lẻ trong hệ thống Mini Supermarket.
-12. Thông tin sinh viên
+
+12. Tác Giả
 - Đề tài: Phát triển Ứng dụng Thu ngân và Quản lý Hàng hóa cho Mô hình Bán lẻ – Cửa hàng Tiện lợi Alpha Mini
 - Họ tên sinh viên: Mai Chí Cường
 - Mã sinh viên: 2124110113
