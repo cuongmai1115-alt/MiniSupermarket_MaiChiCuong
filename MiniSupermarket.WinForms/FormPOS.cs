@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -132,7 +132,7 @@ namespace MiniSupermarket.WinForms
 
         /// <summary>
         /// Sự kiện khi quét hoặc nhập mã vạch và nhấn Enter
-        /// </summary>
+        ///42.Quet mã vạch: khi quét xong nhấn Enter => gọi API tra cứu sản phẩm theo mã vạch
         private async void txtBarcode_KeyDown(object? sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -154,7 +154,7 @@ namespace MiniSupermarket.WinForms
         {
             try
             {
-                var res = await ApiClientService.Client.GetAsync($"products/barcode/{Uri.EscapeDataString(barcode)}");
+                var res = await ApiClientService.Client.GetAsync($"ado-products/barcode/{Uri.EscapeDataString(barcode)}");
 
                 // API trả 404 khi không có mã vạch này: báo đúng nguyên nhân thay vì "lỗi kết nối"
                 if (res.StatusCode == HttpStatusCode.NotFound)
@@ -220,7 +220,7 @@ namespace MiniSupermarket.WinForms
         }
 
         /// <summary>
-        /// Cập nhật giao diện hiển thị giỏ hàng, số lượng và tổng tiền
+        /// 42.Cập nhật giao diện hiển thị giỏ hàng, số lượng và tổng tiền
         /// </summary>
         private void UpdateCartDisplay()
         {
@@ -231,7 +231,7 @@ namespace MiniSupermarket.WinForms
             if (keepIndex >= 0 && keepIndex < dgvCart.Rows.Count)
                 dgvCart.CurrentCell = dgvCart.Rows[keepIndex].Cells[1];
 
-            decimal total = GetTotal();
+            decimal total = GetFinalAmount();
             int totalQty = _cart.Sum(x => x.Quantity);
 
             lblTotalAmount.Text = $"{total:N0} đ";
@@ -255,6 +255,29 @@ namespace MiniSupermarket.WinForms
         private CartItemDto? GetSelectedItem() => dgvCart.CurrentRow?.DataBoundItem as CartItemDto;
 
         private decimal GetTotal() => _cart.Sum(x => x.TotalPrice);
+
+        // Tiêu chí 47: Khách hàng dùng điểm tích lũy trừ tiền (1 điểm = 1.000 đ)
+        private decimal GetDiscount()
+        {
+            if (chkRedeemPoints != null && chkRedeemPoints.Visible && chkRedeemPoints.Checked && chkRedeemPoints.Tag is int pts && pts > 0)
+            {
+                return pts * 1000m;
+            }
+            return 0m;
+        }
+
+        private decimal GetFinalAmount()
+        {
+            decimal total = GetTotal();
+            decimal discount = GetDiscount();
+            return Math.Max(0, total - discount);
+        }
+
+        private void chkRedeemPoints_CheckedChanged(object? sender, EventArgs e)
+        {
+            UpdateCartDisplay();
+            txtCashReceived_TextChanged(sender, e);
+        }
 
         #endregion
 
@@ -389,6 +412,29 @@ namespace MiniSupermarket.WinForms
                 {
                     lblCustomerName.Text = $"{customer.CustomerName}\nHạng {customer.MembershipRank}  •  {customer.RewardPoints:N0} điểm";
                     lblCustomerName.ForeColor = ColorOk;
+
+                    // Tiêu chí 47: Khách hàng thân thiết có điểm tích lũy -> Tùy chọn đổi điểm trừ tiền
+                    if (customer.RewardPoints >= 50)
+                    {
+                        chkRedeemPoints.Text = "Dùng 50 điểm trừ 50.000 đ vào hóa đơn";
+                        chkRedeemPoints.Tag = 50;
+                        chkRedeemPoints.Visible = true;
+                        chkRedeemPoints.Enabled = true;
+                    }
+                    else if (customer.RewardPoints > 0)
+                    {
+                        int pts = customer.RewardPoints;
+                        chkRedeemPoints.Text = $"Dùng {pts} điểm trừ {pts * 1000:N0} đ vào hóa đơn";
+                        chkRedeemPoints.Tag = pts;
+                        chkRedeemPoints.Visible = true;
+                        chkRedeemPoints.Enabled = true;
+                    }
+                    else
+                    {
+                        chkRedeemPoints.Visible = false;
+                        chkRedeemPoints.Checked = false;
+                        chkRedeemPoints.Tag = 0;
+                    }
                 }
                 else
                 {
@@ -407,6 +453,12 @@ namespace MiniSupermarket.WinForms
         {
             lblCustomerName.Text = "Khách vãng lai";
             lblCustomerName.ForeColor = ColorMuted;
+            if (chkRedeemPoints != null)
+            {
+                chkRedeemPoints.Visible = false;
+                chkRedeemPoints.Checked = false;
+                chkRedeemPoints.Tag = 0;
+            }
         }
 
         #endregion
@@ -461,7 +513,7 @@ namespace MiniSupermarket.WinForms
                 return;
             }
 
-            decimal change = GetCashReceived() - GetTotal();
+            decimal change = GetCashReceived() - GetFinalAmount();
             if (change >= 0)
             {
                 lblChange.Text = $"{change:N0} đ";
@@ -483,7 +535,7 @@ namespace MiniSupermarket.WinForms
 
             string tag = btn.Tag?.ToString() ?? string.Empty;
             decimal amount = tag == "EXACT"
-                ? GetTotal()
+                ? GetFinalAmount()
                 : decimal.Parse(tag, CultureInfo.InvariantCulture);
 
             txtCashReceived.Text = amount > 0 ? amount.ToString("N0") : string.Empty;
@@ -509,7 +561,7 @@ namespace MiniSupermarket.WinForms
                 return;
             }
 
-            decimal total = GetTotal();
+            decimal total = GetFinalAmount();
 
             // Đã nhập tiền khách đưa mà chưa đủ thì không cho thanh toán
             if (GetCashDigits().Length > 0 && GetCashReceived() < total)
@@ -525,6 +577,7 @@ namespace MiniSupermarket.WinForms
             {
                 CashierUsername = SessionManager.CurrentUsername,
                 CustomerPhone = txtCustomerPhone.Text.Trim(),
+                PointsToRedeem = (chkRedeemPoints != null && chkRedeemPoints.Visible && chkRedeemPoints.Checked && chkRedeemPoints.Tag is int pts) ? pts : 0,
                 Items = _cart.Select(i => new { i.ProductId, i.Quantity, i.UnitPrice }).ToList()
             };
 
@@ -538,7 +591,9 @@ namespace MiniSupermarket.WinForms
                     decimal paid = result != null && result.TotalAmount > 0 ? result.TotalAmount : total;
                     decimal cash = GetCashReceived();
 
+                    int redeemed = (chkRedeemPoints != null && chkRedeemPoints.Visible && chkRedeemPoints.Checked && chkRedeemPoints.Tag is int rPts) ? rPts : 0;
                     string msg = $"Thanh toán thành công!\n\nTổng tiền: {paid:N0} đ";
+                    if (redeemed > 0) msg += $"\nĐã dùng điểm thưởng: -{redeemed} điểm (-{redeemed * 1000:N0} đ)";
                     if (cash > 0) msg += $"\nKhách đưa: {cash:N0} đ\nTiền thừa trả khách: {cash - paid:N0} đ";
                     if (result != null && result.PointsEarned > 0) msg += $"\nĐiểm tích lũy: +{result.PointsEarned}";
 
@@ -617,6 +672,7 @@ namespace MiniSupermarket.WinForms
             _ => "Lỗi không xác định."
         };
 
+        //42. thông báo lỗi chi tiết khi gọi API thất bại (có thể có message từ server)
         private static async Task<string> BuildErrorAsync(string action, HttpResponseMessage res)
         {
             string body = await res.Content.ReadAsStringAsync();

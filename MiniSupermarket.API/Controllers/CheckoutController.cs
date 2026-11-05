@@ -27,7 +27,7 @@ namespace MiniSupermarket.API.Controllers
         // Chức năng: Thanh toán hóa đơn, trừ tồn kho và tích điểm trong 1 Transaction
         // =========================================================================
         [HttpPost]
-        public IActionResult ProcessCheckout([FromBody] CheckoutRequestDto request)
+        public async Task<IActionResult> ProcessCheckout([FromBody] CheckoutRequestDto request)
         {
             // 1. Kiểm tra tính hợp lệ của giỏ hàng
             if (request.Items == null || request.Items.Count == 0)
@@ -44,16 +44,56 @@ namespace MiniSupermarket.API.Controllers
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
 
                 // 2. KHỞI TẠO TRANSACTION (Bắt đầu phiên giao dịch khép kín bảo vệ ACID)
+                //47.
                 SqlTransaction transaction = connection.BeginTransaction();
 
                 try
                 {
                     // Tính toán tổng tiền, tổng số lượng và điểm thưởng tích lũy
-                    decimal finalAmount = request.Items.Sum(i => i.Quantity * i.UnitPrice);
-                    int totalItems = request.Items.Sum(i => i.Quantity);
+                    // Xác định CustomerId (hỗ trợ cả truyền Id hoặc SĐT)
+                    int customerId = request.CustomerId;
+                    if (customerId <= 0 && !string.IsNullOrWhiteSpace(request.CustomerPhone))
+                    {
+                        string getCustSql = "SELECT CustomerId FROM Customers WHERE PhoneNumber = @Phone";
+                        using var cmdCust = new SqlCommand(getCustSql, connection, transaction);
+                        cmdCust.Parameters.AddWithValue("@Phone", request.CustomerPhone.Trim());
+                        object? valCust = await cmdCust.ExecuteScalarAsync();
+                        if (valCust != null && valCust != DBNull.Value)
+                            customerId = Convert.ToInt32(valCust);
+                    }
+                    if (customerId <= 0) customerId = 21; // Mặc định khách lẻ
+                    int totalItems = 0;
+
+                    totalItems = request.Items.Sum(i => i.Quantity);
+                    decimal subTotal = request.Items.Sum(i => i.Quantity * i.UnitPrice);
+
+                    // TIÊU CHÍ 47: ĐỔI ĐIỂM THƯỞNG TRỪ TIỀN HÓA ĐƠN (1 điểm = 1.000 đ)
+                    decimal discountAmount = 0;
+                    int pointsToRedeem = Math.Max(0, request.PointsToRedeem);
+                    if (pointsToRedeem > 0 && customerId > 0 && customerId != 21)
+                    {
+                        string checkPointsSql = "SELECT RewardPoints FROM Customers WHERE CustomerId = @CustomerId";
+                        int currentPoints = 0;
+                        using (SqlCommand cmdPoints = new SqlCommand(checkPointsSql, connection, transaction))
+                        {
+                            cmdPoints.Parameters.AddWithValue("@CustomerId", customerId);
+                            object? val = await cmdPoints.ExecuteScalarAsync();
+                            if (val != null && val != DBNull.Value) currentPoints = Convert.ToInt32(val);
+                        }
+
+                        if (currentPoints < pointsToRedeem)
+                        {
+                            throw new InvalidOperationException($"Khách hàng không đủ điểm tích lũy! (Hiện có: {currentPoints} điểm, yêu cầu đổi: {pointsToRedeem} điểm)");
+                        }
+
+                        discountAmount = pointsToRedeem * 1000m;
+                    }
+
+                    decimal finalAmount = Math.Max(0, subTotal - discountAmount);
+                    totalItems = request.Items.Sum(i => i.Quantity);
 
                     // Quy tắc tích điểm siêu thị: Cứ mỗi 10.000đ mua hàng được tặng 1 điểm thưởng
                     int rewardPoints = (int)(finalAmount / 10000);
@@ -61,9 +101,9 @@ namespace MiniSupermarket.API.Controllers
                     // Sinh mã hóa đơn theo cấu trúc: HD-YYYYMMDD-XXXX (4 ký tự ngẫu nhiên)
                     string orderCode = $"HD-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}";
 
-                    // =====================================================================
+      
                     // BƯỚC 1: TẠO HÓA ĐƠN TỔNG THỂ TRONG BẢNG Orders
-                    // =====================================================================
+      
                     // Sử dụng OUTPUT INSERTED.OrderId để lấy về giá trị khóa chính vừa tự động tăng
                     string insertOrderSql = @"
                         INSERT INTO Orders (OrderCode, CreatedDate, CashierUsername, CustomerId, TotalItems, FinalAmount, RewardPoints)
@@ -76,13 +116,13 @@ namespace MiniSupermarket.API.Controllers
                         // Gán tham số an toàn
                         cmdOrder.Parameters.AddWithValue("@OrderCode", orderCode);
                         cmdOrder.Parameters.AddWithValue("@CashierUsername", request.CashierUsername.Trim());
-                        cmdOrder.Parameters.AddWithValue("@CustomerId", request.CustomerId);
+                        cmdOrder.Parameters.AddWithValue("@CustomerId", customerId);
                         cmdOrder.Parameters.AddWithValue("@TotalItems", totalItems);
                         cmdOrder.Parameters.AddWithValue("@FinalAmount", finalAmount);
                         cmdOrder.Parameters.AddWithValue("@RewardPoints", rewardPoints);
 
                         // ExecuteScalar() trả về giá trị OrderId vừa được hệ thống sinh ra
-                        orderId = (int)cmdOrder.ExecuteScalar();
+                        orderId = Convert.ToInt32(await cmdOrder.ExecuteScalarAsync());
                     }
 
                     // =====================================================================
@@ -98,9 +138,9 @@ namespace MiniSupermarket.API.Controllers
                         using (SqlCommand cmdCheck = new SqlCommand(checkStockSql, connection, transaction))
                         {
                             cmdCheck.Parameters.AddWithValue("@ProductId", item.ProductId);
-                            using (SqlDataReader reader = cmdCheck.ExecuteReader())
+                            using (SqlDataReader reader = await cmdCheck.ExecuteReaderAsync())
                             {
-                                if (!reader.Read())
+                                if (!await reader.ReadAsync())
                                 {
                                     throw new InvalidOperationException($"Không tìm thấy sản phẩm có ID: {item.ProductId}");
                                 }
@@ -129,7 +169,7 @@ namespace MiniSupermarket.API.Controllers
                             cmdDetail.Parameters.AddWithValue("@Quantity", item.Quantity);
                             cmdDetail.Parameters.AddWithValue("@UnitPrice", item.UnitPrice);
                             cmdDetail.Parameters.AddWithValue("@LineTotal", item.Quantity * item.UnitPrice);
-                            cmdDetail.ExecuteNonQuery();
+                            await cmdDetail.ExecuteNonQueryAsync();
                         }
 
                         // 3.4. Khấu trừ số lượng tồn kho trong bảng Products
@@ -142,14 +182,32 @@ namespace MiniSupermarket.API.Controllers
                         {
                             cmdStock.Parameters.AddWithValue("@Qty", item.Quantity);
                             cmdStock.Parameters.AddWithValue("@ProductId", item.ProductId);
-                            cmdStock.ExecuteNonQuery();
+                            await cmdStock.ExecuteNonQueryAsync();
                         }
                     }
 
                     // =====================================================================
                     // BƯỚC 4: CỘNG ĐIỂM TÍCH LŨY CHO KHÁCH HÀNG TRONG BẢNG Customers
                     // =====================================================================
-                    if (rewardPoints > 0)
+
+
+                    // Tiêu chí 47: Trừ điểm đổi của khách hàng trong cùng SqlTransaction
+                    if (pointsToRedeem > 0 && customerId > 0 && customerId != 21)
+                    {
+                        string deductPointsSql = @"
+                            UPDATE Customers
+                            SET RewardPoints = RewardPoints - @PointsToRedeem
+                            WHERE CustomerId = @CustomerId";
+
+                        using (SqlCommand cmdDeduct = new SqlCommand(deductPointsSql, connection, transaction))
+                        {
+                            cmdDeduct.Parameters.AddWithValue("@PointsToRedeem", pointsToRedeem);
+                            cmdDeduct.Parameters.AddWithValue("@CustomerId", customerId);
+                            await cmdDeduct.ExecuteNonQueryAsync();
+                        }
+                    }
+
+                    if (rewardPoints > 0 && customerId > 0 && customerId != 21)
                     {
                         string updatePointsSql = @"
                             UPDATE Customers
@@ -159,21 +217,26 @@ namespace MiniSupermarket.API.Controllers
                         using (SqlCommand cmdCustomer = new SqlCommand(updatePointsSql, connection, transaction))
                         {
                             cmdCustomer.Parameters.AddWithValue("@Points", rewardPoints);
-                            cmdCustomer.Parameters.AddWithValue("@CustomerId", request.CustomerId);
-                            cmdCustomer.ExecuteNonQuery();
+                            cmdCustomer.Parameters.AddWithValue("@CustomerId", customerId);
+                            await cmdCustomer.ExecuteNonQueryAsync();
                         }
                     }
 
                     // =====================================================================
                     // BƯỚC 5: XÁC NHẬN LƯU VĨNH VIỄN TOÀN BỘ THAO TÁC (COMMIT)
                     // =====================================================================
-                    transaction.Commit();
+                    await transaction.CommitAsync();
 
                     // Trả về kết quả thành công với mã 200 OK
                     return Ok(new
                     {
                         success = true,
-                        message = "Thanh toán hóa đơn POS thành công!",
+                        message = pointsToRedeem > 0
+                            ? $"Thanh toán thành công! Đã dùng {pointsToRedeem} điểm trừ {discountAmount:N0} đ vào hóa đơn."
+                            : "Thanh toán hóa đơn POS thành công!",
+                        subTotal = subTotal,
+                        discountAmount = discountAmount,
+                        pointsRedeemed = pointsToRedeem,
                         orderId = orderId,
                         orderCode = orderCode,
                         totalItems = totalItems,
@@ -183,12 +246,10 @@ namespace MiniSupermarket.API.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // =====================================================================
                     // BƯỚC 6: HOÀN TÁC TOÀN BỘ DỮ LIỆU SẠCH SẼ KHI CÓ BẤT KỲ LỖI NÀO (ROLLBACK)
-                    // =====================================================================
                     try
                     {
-                        transaction.Rollback();
+                        await transaction.RollbackAsync();
                     }
                     catch (Exception rollbackEx)
                     {
@@ -215,13 +276,13 @@ namespace MiniSupermarket.API.Controllers
         // DELETE: api/checkout/cancel/{orderId}
         // =========================================================================
         [HttpDelete("cancel/{orderId}")]
-        public IActionResult CancelOrder(int orderId)
+        public async Task<IActionResult> CancelOrder(int orderId)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection")!;
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                connection.Open();
+                await connection.OpenAsync();
                 SqlTransaction transaction = connection.BeginTransaction();
 
                 try
@@ -234,7 +295,7 @@ namespace MiniSupermarket.API.Controllers
                     using (SqlCommand cmdGet = new SqlCommand(getOrderSql, connection, transaction))
                     {
                         cmdGet.Parameters.AddWithValue("@OrderId", orderId);
-                        using (SqlDataReader reader = cmdGet.ExecuteReader())
+                        using (SqlDataReader reader = await cmdGet.ExecuteReaderAsync())
                         {
                             if (!reader.Read())
                             {
@@ -253,9 +314,9 @@ namespace MiniSupermarket.API.Controllers
                     using (SqlCommand cmdDetails = new SqlCommand(getDetailsSql, connection, transaction))
                     {
                         cmdDetails.Parameters.AddWithValue("@OrderId", orderId);
-                        using (SqlDataReader reader = cmdDetails.ExecuteReader())
+                        using (SqlDataReader reader = await cmdDetails.ExecuteReaderAsync())
                         {
-                            while (reader.Read())
+                            while (await reader.ReadAsync())
                             {
                                 itemsToRestore.Add((
                                     Convert.ToInt32(reader["ProductId"]),
@@ -277,7 +338,7 @@ namespace MiniSupermarket.API.Controllers
                         {
                             cmdRestore.Parameters.AddWithValue("@Qty", item.Quantity);
                             cmdRestore.Parameters.AddWithValue("@ProductId", item.ProductId);
-                            cmdRestore.ExecuteNonQuery();
+                            await cmdRestore.ExecuteNonQueryAsync();
                         }
                     }
 
@@ -296,7 +357,7 @@ namespace MiniSupermarket.API.Controllers
                         {
                             cmdDeduct.Parameters.AddWithValue("@Pts", pointsToDeduct);
                             cmdDeduct.Parameters.AddWithValue("@CustomerId", customerId);
-                            cmdDeduct.ExecuteNonQuery();
+                            await cmdDeduct.ExecuteNonQueryAsync();
                         }
                     }
 
@@ -305,7 +366,7 @@ namespace MiniSupermarket.API.Controllers
                     using (SqlCommand cmdDelDetails = new SqlCommand(deleteDetailsSql, connection, transaction))
                     {
                         cmdDelDetails.Parameters.AddWithValue("@OrderId", orderId);
-                        cmdDelDetails.ExecuteNonQuery();
+                        await cmdDelDetails.ExecuteNonQueryAsync();
                     }
 
                     // 6. Xóa hóa đơn tổng trong bảng Orders
@@ -313,11 +374,11 @@ namespace MiniSupermarket.API.Controllers
                     using (SqlCommand cmdDelOrder = new SqlCommand(deleteOrderSql, connection, transaction))
                     {
                         cmdDelOrder.Parameters.AddWithValue("@OrderId", orderId);
-                        cmdDelOrder.ExecuteNonQuery();
+                        await cmdDelOrder.ExecuteNonQueryAsync();
                     }
 
                     // 7. Xác nhận lưu vĩnh viễn (Commit)
-                    transaction.Commit();
+                    await transaction.CommitAsync();
 
                     return Ok(new
                     {
@@ -330,7 +391,7 @@ namespace MiniSupermarket.API.Controllers
                     // Hoàn tác sạch sẽ khi có lỗi
                     try
                     {
-                        transaction.Rollback();
+                        await transaction.RollbackAsync();
                     }
                     catch { }
 

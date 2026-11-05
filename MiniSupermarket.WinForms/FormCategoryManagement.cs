@@ -22,10 +22,22 @@ namespace MiniSupermarket.WinForms
 
         private int _busyCount; // đếm số request đang chạy để khóa/mở nút đúng lúc
 
+        // Điều khiển phân trang (Buổi 6 - giống Sản phẩm)
+        private Button btnPrev = null!;
+        private Button btnNext = null!;
+        private Label lblPaging = null!;
+        private Panel pnlPaging = null!;
+        private int _currentPage = 1;
+        private readonly int _pageSize = 5;
+        private int _totalPages = 1;
+        private int _totalItems = 0;
+
         public FormCategoryManagement()
         {
             InitializeComponent();
+            EnsureVietnameseTexts();
             SetupGrid();
+            BuildPagingControls();
 
             // Gõ lại vào ô nào thì xóa dấu ! đỏ của ô đó
             txtCategoryName.TextChanged += (s, e) => errorProvider1.SetError(txtCategoryName, string.Empty);
@@ -40,6 +52,28 @@ namespace MiniSupermarket.WinForms
                     btnSearch.PerformClick();
                 }
             };
+        }
+
+        // Đảm bảo toàn bộ chữ tiếng Việt luôn hiển thị chuẩn đẹp, có dấu, không bao giờ bị lỗi dấu ?
+        private void EnsureVietnameseTexts()
+        {
+            Text = "Quản lý nhóm hàng";
+            groupBox1.Text = "Tìm kiếm";
+            txtKeyword.PlaceholderText = "Nhập tên nhóm hàng cần tìm, nhấn Enter";
+            btnSearch.Text = "Tìm kiếm";
+            btnLoad.Text = "Tải lại";
+            groupBox2.Text = "Danh sách nhóm hàng";
+            colId.HeaderText = "Mã ID";
+            colCategoryName.HeaderText = "Tên nhóm hàng";
+            colDescription.HeaderText = "Mô tả";
+            groupBox3.Text = "Thông tin nhóm hàng";
+            label1.Text = "Mã nhóm hàng";
+            label2.Text = "Tên nhóm hàng";
+            label3.Text = "Mô tả";
+            btnAdd.Text = "Thêm mới";
+            btnUpdate.Text = "Cập nhật";
+            btnDelete.Text = "Xóa";
+            btnClear.Text = "Nhập mới";
         }
 
         #region Giao diện lưới
@@ -84,9 +118,14 @@ namespace MiniSupermarket.WinForms
                 BackColor = Color.FromArgb(249, 250, 251)
             };
 
+            // Thanh cuộn dọc, bỏ thanh cuộn ngang để không bao giờ xuất hiện thanh đen bên dưới
+            dgvCategories.ScrollBars = ScrollBars.Vertical;
+            dgvCategories.ShowCellToolTips = true;
+
             // Cột Mã ID cố định; Tên và Mô tả chia đều phần còn lại theo tỉ lệ 4 : 6 nên luôn vừa khung
             colId.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-            colId.Width = 80;
+            colId.Width = 72;
+            colId.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             colCategoryName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             colCategoryName.FillWeight = 40F;
             colCategoryName.MinimumWidth = 140;
@@ -249,7 +288,7 @@ namespace MiniSupermarket.WinForms
         }
 
         // Hiện lỗi từ API: hộp thoại + dòng trạng thái màu đỏ/cam
-        private async Task ShowApiErrorAsync(string action, HttpResponseMessage response)
+        private static async Task ShowApiErrorAsync(string action, HttpResponseMessage response)
         {
             var (message, icon) = await BuildApiErrorAsync(action, response);
             MessageBox.Show(message, $"Lỗi - {action}", MessageBoxButtons.OK, icon);
@@ -286,6 +325,8 @@ namespace MiniSupermarket.WinForms
             bool enabled = _busyCount <= 0;
             foreach (var b in new[] { btnAdd, btnUpdate, btnDelete, btnClear, btnSearch, btnLoad })
                 b.Enabled = enabled;
+            if (btnPrev != null) btnPrev.Enabled = enabled && _currentPage > 1;
+            if (btnNext != null) btnNext.Enabled = enabled && _currentPage < _totalPages;
             UseWaitCursor = !enabled;
         }
 
@@ -368,45 +409,24 @@ namespace MiniSupermarket.WinForms
 
         #region Xử lý sự kiện
 
-        // Form vừa bật lên: tự động tải dữ liệu từ API lên bảng
+        // Form vừa bật lên: tự động tải dữ liệu từ API lên bảng theo phân trang
         private async void FormCategoryManagement_Load(object? sender, EventArgs e)
         {
-            await LoadDataAsync();
+            await LoadCategoriesPagedAsync();
         }
 
-        // Hàm dùng chung: gọi API GET lấy danh sách và đổ lên DataGridView
+        // Hàm dùng chung: chuyển tiếp sang tải theo phân trang
         private async Task LoadDataAsync()
         {
-            SetBusy(true);
-            try
-            {
-                using var client = GetAuthenticatedClient();
-                using var response = await client.GetAsync("categories");
-                if (!response.IsSuccessStatusCode)
-                {
-                    await ShowApiErrorAsync("Tải dữ liệu", response);
-                    return;
-                }
-
-                var list = await response.Content.ReadFromJsonAsync<List<CategoryDto>>() ?? new List<CategoryDto>();
-                BindGrid(list);
-                SetStatus($"Có {list.Count} nhóm hàng.", StatusKind.Info);
-            }
-            catch (Exception ex)
-            {
-                ShowException("Tải dữ liệu", ex);
-            }
-            finally
-            {
-                SetBusy(false);
-            }
+            await LoadCategoriesPagedAsync();
         }
 
-        // Nút Tải lại: xóa từ khóa và tải toàn bộ danh sách
+        // Nút Tải lại: xóa từ khóa và tải trang đầu tiên
         private async void btnLoad_Click(object? sender, EventArgs e)
         {
             txtKeyword.Clear();
-            await LoadDataAsync();
+            _currentPage = 1;
+            await LoadCategoriesPagedAsync();
         }
 
         // Click vào một dòng: đưa dữ liệu lên các ô nhập để chuẩn bị Sửa/Xóa
@@ -448,7 +468,8 @@ namespace MiniSupermarket.WinForms
                 using var response = await client.PostAsJsonAsync("categories", newCat);
                 if (response.IsSuccessStatusCode)
                 {
-                    await LoadDataAsync();
+                    _currentPage = 1;
+                    await LoadCategoriesPagedAsync();
                     ClearInputs();
                     SetStatus($"Đã thêm nhóm hàng \"{name}\".", StatusKind.Success);
                     MessageBox.Show($"Đã thêm nhóm hàng \"{name}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -485,7 +506,7 @@ namespace MiniSupermarket.WinForms
                 using var response = await client.PutAsJsonAsync($"categories/{id}", updateCat);
                 if (response.IsSuccessStatusCode)
                 {
-                    await LoadDataAsync();
+                    await LoadCategoriesPagedAsync();
                     ClearInputs();
                     SetStatus($"Đã cập nhật nhóm hàng \"{name}\".", StatusKind.Success);
                     MessageBox.Show($"Đã cập nhật nhóm hàng \"{name}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -493,7 +514,7 @@ namespace MiniSupermarket.WinForms
                 else
                 {
                     await ShowApiErrorAsync("Cập nhật", response);
-                    if (response.StatusCode == HttpStatusCode.NotFound) await LoadDataAsync(); // dòng đã bị xóa -> làm mới danh sách
+                    if (response.StatusCode == HttpStatusCode.NotFound) await LoadCategoriesPagedAsync(); // dòng đã bị xóa -> làm mới danh sách
                 }
             }
             catch (Exception ex)
@@ -523,7 +544,11 @@ namespace MiniSupermarket.WinForms
                 using var response = await client.DeleteAsync($"categories/{id}");
                 if (response.IsSuccessStatusCode)
                 {
-                    await LoadDataAsync();
+                    if (dgvCategories.DataSource is List<CategoryDto> cur && cur.Count == 1 && _currentPage > 1)
+                    {
+                        _currentPage--;
+                    }
+                    await LoadCategoriesPagedAsync();
                     ClearInputs();
                     SetStatus($"Đã xóa nhóm hàng \"{name}\".", StatusKind.Success);
                     MessageBox.Show($"Đã xóa nhóm hàng \"{name}\" thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -531,7 +556,7 @@ namespace MiniSupermarket.WinForms
                 else
                 {
                     await ShowApiErrorAsync("Xóa", response);
-                    if (response.StatusCode == HttpStatusCode.NotFound) await LoadDataAsync();
+                    if (response.StatusCode == HttpStatusCode.NotFound) await LoadCategoriesPagedAsync();
                 }
             }
             catch (Exception ex)
@@ -544,38 +569,154 @@ namespace MiniSupermarket.WinForms
             }
         }
 
-        // Nút TÌM KIẾM (SEARCH): gọi API lọc nhóm hàng theo từ khóa (Query String)
+        // Nút TÌM KIẾM (SEARCH): áp dụng từ khóa và đưa về trang 1
         private async void btnSearch_Click(object? sender, EventArgs e)
         {
-            string keyword = txtKeyword.Text.Trim();
-            if (keyword.Length == 0)
+            _currentPage = 1;
+            await LoadCategoriesPagedAsync();
+        }
+
+        #endregion
+
+        #region Điều khiển phân trang (Buổi 6 - giống Sản phẩm)
+
+        private void BuildPagingControls()
+        {
+            pnlPaging = new Panel
             {
-                await LoadDataAsync(); // ô tìm kiếm trống thì tải lại toàn bộ
-                return;
+                Dock = DockStyle.Bottom,
+                Height = 44,
+                BackColor = Color.White,
+                Padding = new Padding(4, 4, 4, 4)
+            };
+
+            var tlp = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 3,
+                RowCount = 1,
+                BackColor = Color.White
+            };
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30F));
+
+            btnPrev = new Button
+            {
+                Text = "<< Trang trước",
+                Anchor = AnchorStyles.Left,
+                Size = new Size(130, 32),
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                BackColor = Color.FromArgb(243, 244, 246),
+                ForeColor = Color.FromArgb(31, 41, 55),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Enabled = false
+            };
+            btnPrev.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
+            btnPrev.Click += btnPrev_Click;
+
+            lblPaging = new Label
+            {
+                Text = "Trang 1 / 1 (Tổng: 0 nhóm hàng)",
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(31, 41, 55)
+            };
+
+            btnNext = new Button
+            {
+                Text = "Trang sau >>",
+                Anchor = AnchorStyles.Right,
+                Size = new Size(130, 32),
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                BackColor = Color.FromArgb(243, 244, 246),
+                ForeColor = Color.FromArgb(31, 41, 55),
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand,
+                Enabled = false
+            };
+            btnNext.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
+            btnNext.Click += btnNext_Click;
+
+            tlp.Controls.Add(btnPrev, 0, 0);
+            tlp.Controls.Add(lblPaging, 1, 0);
+            tlp.Controls.Add(btnNext, 2, 0);
+
+            pnlPaging.Controls.Add(tlp);
+
+            groupBox2.Controls.Add(pnlPaging);
+            lblStatus.SendToBack();
+            pnlPaging.BringToFront();
+            dgvCategories.BringToFront();
+        }
+
+        private async void btnPrev_Click(object? sender, EventArgs e)
+        {
+            if (_currentPage > 1)
+            {
+                _currentPage--;
+                await LoadCategoriesPagedAsync();
             }
+        }
+
+        private async void btnNext_Click(object? sender, EventArgs e)
+        {
+            if (_currentPage < _totalPages)
+            {
+                _currentPage++;
+                await LoadCategoriesPagedAsync();
+            }
+        }
+
+        private async Task LoadCategoriesPagedAsync()
+        {
+            string keyword = txtKeyword.Text.Trim();
 
             SetBusy(true);
             try
             {
+                var url = $"categories/paged?pageNumber={_currentPage}&pageSize={_pageSize}";
+                if (!string.IsNullOrWhiteSpace(keyword))
+                    url += $"&keyword={Uri.EscapeDataString(keyword)}";
+
                 using var client = GetAuthenticatedClient();
-                // GET /api/categories/search?keyword=abc (mã hóa URL để từ khóa có dấu/khoảng trắng/ký tự đặc biệt không bị lỗi)
-                using var response = await client.GetAsync($"categories/search?keyword={Uri.EscapeDataString(keyword)}");
+                using var response = await client.GetAsync(url);
                 if (!response.IsSuccessStatusCode)
                 {
-                    await ShowApiErrorAsync("Tìm kiếm", response);
+                    await ShowApiErrorAsync("Tải trang nhóm hàng", response);
                     return;
                 }
 
-                var result = await response.Content.ReadFromJsonAsync<List<CategoryDto>>() ?? new List<CategoryDto>();
-                BindGrid(result);
-                if (result.Count == 0)
-                    SetStatus($"Không tìm thấy nhóm hàng nào với từ khóa \"{keyword}\".", StatusKind.Warning);
+                var pagedData = await response.Content.ReadFromJsonAsync<PagedViewResult<CategoryDto>>();
+                if (pagedData == null) return;
+
+                _currentPage = pagedData.CurrentPage;
+                _totalPages = Math.Max(1, pagedData.TotalPages);
+                _totalItems = pagedData.TotalItems;
+                var items = pagedData.Items ?? new List<CategoryDto>();
+
+                BindGrid(items);
+
+                lblPaging.Text = $"Trang {_currentPage} / {_totalPages} (Tổng: {_totalItems} nhóm hàng)";
+                if (items.Count == 0)
+                {
+                    SetStatus(string.IsNullOrWhiteSpace(keyword)
+                        ? "Chưa có nhóm hàng nào."
+                        : $"Không tìm thấy nhóm hàng nào với từ khóa \"{keyword}\".", StatusKind.Warning);
+                }
                 else
-                    SetStatus($"Tìm thấy {result.Count} nhóm hàng với từ khóa \"{keyword}\".", StatusKind.Info);
+                {
+                    SetStatus($"Đã tải trang {_currentPage}/{_totalPages} (Tổng: {_totalItems} nhóm hàng)", StatusKind.Info);
+                }
+
+                btnPrev.Enabled = _currentPage > 1;
+                btnNext.Enabled = _currentPage < _totalPages;
             }
             catch (Exception ex)
             {
-                ShowException("Tìm kiếm", ex);
+                ShowException("Tải trang nhóm hàng", ex);
             }
             finally
             {

@@ -67,7 +67,7 @@
             // 
             tlpMain.ColumnCount = 2;
             tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 389F));
+            tlpMain.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 270F));
             tlpMain.Controls.Add(groupBox1, 0, 0);
             tlpMain.Controls.Add(groupBox2, 0, 1);
             tlpMain.Controls.Add(pnlRight, 1, 1);
@@ -166,7 +166,7 @@
             groupBox2.Controls.Add(lblStatus);
             groupBox2.Dock = DockStyle.Fill;
             groupBox2.Location = new Point(0, 99);
-            groupBox2.Margin = new Padding(0, 0, 14, 0);
+            groupBox2.Margin = new Padding(0, 0, 8, 0);
             groupBox2.Name = "groupBox2";
             groupBox2.Padding = new Padding(9, 5, 9, 8);
             groupBox2.Size = new Size(818, 686);

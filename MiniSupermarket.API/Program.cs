@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using MiniSupermarket.API.Data;
@@ -73,6 +73,51 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Tự động kiểm tra và nạp 2 Stored Procedure vào CSDL SQL Server khi khởi động API
+try
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<SupermarketDbContext>();
+
+    db.Database.ExecuteSqlRaw(@"
+        CREATE OR ALTER PROCEDURE sp_GetRevenueByCashier
+        AS
+        BEGIN
+            SET NOCOUNT ON;
+            SELECT 
+                CashierUsername,
+                COUNT(OrderId) AS TotalOrders,
+                ISNULL(SUM(FinalAmount), 0) AS TotalRevenue,
+                ISNULL(SUM(RewardPoints), 0) AS TotalPointsAwarded
+            FROM Orders
+            GROUP BY CashierUsername
+            ORDER BY TotalRevenue DESC;
+        END;
+    ");
+
+    db.Database.ExecuteSqlRaw(@"
+        CREATE OR ALTER PROCEDURE sp_GetRevenueByDateRange
+            @FromDate DATETIME,
+            @ToDate DATETIME
+        AS
+        BEGIN
+            SET NOCOUNT ON;
+            SELECT 
+                CashierUsername,
+                COUNT(OrderId) AS TotalOrders,
+                ISNULL(SUM(FinalAmount), 0) AS TotalRevenue
+            FROM Orders
+            WHERE CreatedDate >= @FromDate AND CreatedDate <= @ToDate
+            GROUP BY CashierUsername
+            ORDER BY TotalRevenue DESC;
+        END;
+    ");
+}
+catch (Exception ex)
+{
+    Console.WriteLine("Lỗi nạp Stored Procedure tự động: " + ex.Message);
+}
 
 if (app.Environment.IsDevelopment())
 {

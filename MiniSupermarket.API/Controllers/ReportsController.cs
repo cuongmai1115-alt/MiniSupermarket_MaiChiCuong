@@ -56,21 +56,45 @@ namespace MiniSupermarket.API.Controllers
                 ? Math.Round((totalRevenue - previousRevenue) / previousRevenue * 100m, 1)
                 : null;
 
-            // --- Top 5 bán chạy (theo số lượng, hòa thì xét doanh thu) ---
+            //46. --- Top 5 bán chạy (theo số lượng, hòa thì xét doanh thu) ---
             var topProducts = await details
                 .GroupBy(d => new { d.ProductId, d.Product!.ProductName })
                 .Select(g => new
                 {
                     productName = g.Key.ProductName,
-                    quantitySold = g.Sum(x => x.Quantity),
-                    totalAmount = g.Sum(x => x.LineTotal)
+                    quantitySold = g.Sum(x => x.Quantity),  // Tổng số lượng bán ra
+                    totalAmount = g.Sum(x => x.LineTotal) // Tổng tiền thu về
                 })
-                .OrderByDescending(x => x.quantitySold)
-                .ThenByDescending(x => x.totalAmount)
-                .Take(5)
+                .OrderByDescending(x => x.quantitySold) // Sắp xếp giảm dần theo số lượng
+                .ThenByDescending(x => x.totalAmount)// Lấy top đầu bán chạy nhất
+                .Take(50)
                 .ToListAsync();
 
-            // --- Doanh thu theo ngày (ngày không có đơn vẫn hiện 0 để biểu đồ liên tục) ---
+            // Tổng hợp sản phẩm bán theo từng ngày để bảng doanh thu theo ngày hiển thị rõ sản phẩm
+            var detailsByDay = await details
+                .Select(d => new
+                {
+                    date = d.Order!.CreatedDate.Date,
+                    productName = d.Product != null ? d.Product.ProductName : "SP #" + d.ProductId,
+                    quantity = d.Quantity
+                })
+                .ToListAsync();
+
+            var dayProductsMap = detailsByDay
+                .GroupBy(x => x.date)
+                .ToDictionary(
+                    g => g.Key,
+                    g => new
+                    {
+                        totalItems = g.Sum(x => x.quantity),
+                        topProducts = string.Join(", ", g
+                            .GroupBy(p => p.productName)
+                            .OrderByDescending(pg => pg.Sum(p => p.quantity))
+                            .Take(3)
+                            .Select(pg => $"{pg.Key} ({pg.Sum(p => p.quantity)})"))
+                    });
+
+            // --- Doanh thu theo ngày ---
             var byDay = await orders
                 .GroupBy(o => o.CreatedDate.Date)
                 .Select(g => new { date = g.Key, orders = g.Count(), revenue = g.Sum(x => x.FinalAmount) })
@@ -81,13 +105,36 @@ namespace MiniSupermarket.API.Controllers
             {
                 var map = byDay.ToDictionary(x => x.date);
                 for (var day = start; day <= end; day = day.AddDays(1))
-                    dailyRevenue.Add(map.TryGetValue(day, out var v)
-                        ? new { date = day, v.orders, v.revenue }
-                        : new { date = day, orders = 0, revenue = 0m });
+                {
+                    map.TryGetValue(day, out var v);
+                    dayProductsMap.TryGetValue(day, out var prodInfo);
+                    dailyRevenue.Add(new
+                    {
+                        date = day,
+                        orders = v?.orders ?? 0,
+                        totalItems = prodInfo?.totalItems ?? 0,
+                        topProducts = prodInfo?.topProducts ?? string.Empty,
+                        revenue = v?.revenue ?? 0m
+                    });
+                }
+
+
+
             }
             else
             {
-                dailyRevenue.AddRange(byDay.OrderBy(x => x.date).Select(x => (object)x));
+                foreach (var b in byDay.OrderBy(x => x.date))
+                {
+                    dayProductsMap.TryGetValue(b.date, out var prodInfo);
+                    dailyRevenue.Add(new
+                    {
+                        date = b.date,
+                        b.orders,
+                        totalItems = prodInfo?.totalItems ?? 0,
+                        topProducts = prodInfo?.topProducts ?? string.Empty,
+                        b.revenue
+                    });
+                }
             }
 
             // --- Theo thu ngân ---
@@ -219,9 +266,45 @@ namespace MiniSupermarket.API.Controllers
                 isDemoData = false
             });
         }
-        // BUỔI 5 - TIẾT 3: BÁO CÁO DOANH THU CA BÁN LẺ (STORED PROCEDURE)
+        // =========================================================================
+        // TIÊU CHÍ 44: DASHBOARD THẺ CHỈ SỐ TỔNG QUAN (KPI SUMMARY CARDS)
+        // GET api/reports/dashboard-summary
+        // =========================================================================
+        [HttpGet("dashboard-summary")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetDashboardSummary()
+        {
+            var today = DateTime.Today;
+            var tomorrow = today.AddDays(1);
+
+            // 1. Doanh thu hôm nay (VNĐ)
+            decimal todayRevenue = await _db.Orders.AsNoTracking()
+                .Where(o => o.CreatedDate >= today && o.CreatedDate < tomorrow)
+                .SumAsync(o => (decimal?)o.FinalAmount) ?? 0m;
+
+            // 2. Tổng số hóa đơn đã xuất
+            int totalOrders = await _db.Orders.AsNoTracking().CountAsync();
+
+            // 3. Số lượng khách hàng mới đăng ký
+            int newCustomers = await _db.Customers.AsNoTracking().CountAsync();
+
+            // 4. Số mặt hàng sắp hết hàng (tồn kho <= 10)
+            int lowStockCount = await _db.Products.AsNoTracking()
+                .Where(p => p.StockQuantity <= 10)
+                .CountAsync();
+
+            return Ok(new
+            {
+                todayRevenue,
+                totalOrders,
+                newCustomers,
+                lowStockCount
+            });
+        }
+
         // GET: api/reports/revenue-by-cashier
         // Chức năng: Gọi Stored Procedure sp_GetRevenueByCashier qua SqlDataReader
+        // Tạo thủ tục trên SQL Server và gọi từ C# bằng CommandType.StoredProcedure
 
         [HttpGet("revenue-by-cashier")]
         [AllowAnonymous] // Cho phép kiểm thử trực tiếp trên Swagger UI theo yêu cầu Tiết 3

@@ -22,6 +22,8 @@ namespace MiniSupermarket.API.Models
 
         // Mã định danh khách hàng (nếu là khách vãng lai, truyền CustomerId = 15 hoặc tương ứng)
         public int CustomerId { get; set; }
+        public string? CustomerPhone { get; set; }
+        public int PointsToRedeem { get; set; } = 0;
 
         // Danh sách các món hàng cần thanh toán
         public List<CartItemCheckoutDto> Items { get; set; } = new();

@@ -37,6 +37,7 @@ namespace MiniSupermarket.WinForms
         public FormCustomerManagement()
         {
             InitializeComponent();
+            EnsureVietnameseTexts();
             SetupGrid();
 
             // Gõ lại vào ô nào thì xóa dấu ! đỏ của ô đó
@@ -55,6 +56,40 @@ namespace MiniSupermarket.WinForms
             };
         }
 
+        // Đảm bảo toàn bộ chữ tiếng Việt luôn hiển thị chuẩn đẹp, có dấu, không bao giờ bị lỗi dấu ?
+        private void EnsureVietnameseTexts()
+        {
+            Text = "Quản lý khách hàng";
+            groupBox1.Text = "Tìm kiếm";
+            txtKeyword.PlaceholderText = "Nhập tên hoặc số điện thoại khách hàng, nhấn Enter";
+            btnSearch.Text = "Tìm kiếm";
+            btnLoad.Text = "Tải lại";
+
+            groupBox2.Text = "Danh sách khách hàng";
+            colId.HeaderText = "Mã KH";
+            colName.HeaderText = "Tên khách hàng";
+            colPhone.HeaderText = "Số điện thoại";
+            colAddress.HeaderText = "Địa chỉ";
+            colPoints.HeaderText = "Điểm thưởng";
+            colRank.HeaderText = "Hạng thẻ";
+
+            groupBox3.Text = "Thông tin khách hàng";
+            lblId.Text = "Mã KH (tự sinh)";
+            lblName.Text = "Tên khách hàng (*)";
+            txtCustomerName.PlaceholderText = "Tối đa 100 ký tự";
+            lblPhone.Text = "Số điện thoại (*)";
+            txtPhoneNumber.PlaceholderText = "Ví dụ: 0901234567";
+            lblAddress.Text = "Địa chỉ";
+            txtAddress.PlaceholderText = "Tối đa 200 ký tự";
+            lblPoints.Text = "Điểm thưởng";
+            lblRank.Text = "Hạng thẻ";
+
+            btnAdd.Text = "Thêm mới";
+            btnUpdate.Text = "Cập nhật";
+            btnDelete.Text = "Xóa";
+            btnClear.Text = "Nhập mới";
+        }
+
         private async void FormCustomerManagement_Load(object? sender, EventArgs e)
         {
             ApplyRolePermissions();
@@ -66,6 +101,9 @@ namespace MiniSupermarket.WinForms
 
         private void SetupGrid()
         {
+            // Thu gọn khung nhập liệu bên phải xuống 270px để dành tối đa không gian cho bảng dữ liệu
+            tlpMain.ColumnStyles[1].Width = 270F;
+
             dgvCustomers.RowHeadersVisible = false;
             dgvCustomers.BackgroundColor = Color.White;
             dgvCustomers.BorderStyle = BorderStyle.None;
@@ -74,21 +112,22 @@ namespace MiniSupermarket.WinForms
             dgvCustomers.AllowUserToResizeRows = false;
             dgvCustomers.RowTemplate.Height = 34;
             dgvCustomers.ScrollBars = ScrollBars.Vertical;
+            dgvCustomers.ShowCellToolTips = true;
 
             dgvCustomers.EnableHeadersVisualStyles = false;
             dgvCustomers.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
             dgvCustomers.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            dgvCustomers.ColumnHeadersHeight = 38;
+            dgvCustomers.ColumnHeadersHeight = 36;
             dgvCustomers.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
             {
                 BackColor = Color.FromArgb(31, 41, 55),
                 ForeColor = Color.White,
                 SelectionBackColor = Color.FromArgb(31, 41, 55),
                 SelectionForeColor = Color.White,
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                 Alignment = DataGridViewContentAlignment.MiddleLeft,
                 WrapMode = DataGridViewTriState.False,
-                Padding = new Padding(6, 0, 6, 0)
+                Padding = new Padding(3, 0, 3, 0)
             };
             dgvCustomers.DefaultCellStyle = new DataGridViewCellStyle
             {
@@ -96,39 +135,72 @@ namespace MiniSupermarket.WinForms
                 ForeColor = Color.FromArgb(17, 24, 39),
                 SelectionBackColor = Color.FromArgb(219, 234, 254),
                 SelectionForeColor = Color.FromArgb(17, 24, 39),
-                Font = new Font("Segoe UI", 10F),
-                Padding = new Padding(6, 0, 6, 0)
+                Font = new Font("Segoe UI", 9F),
+                Padding = new Padding(3, 0, 3, 0)
             };
             dgvCustomers.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle
             {
                 BackColor = Color.FromArgb(249, 250, 251)
             };
 
-            // Mọi cột chia phần còn lại theo tỉ lệ nên luôn vừa khung, không có thanh cuộn ngang
-            SetFill(colId, 8F, 55);
-            SetFill(colName, 24F, 130);
-            SetFill(colPhone, 16F, 105);
-            SetFill(colAddress, 32F, 140);
-            SetFill(colPoints, 11F, 80);
-            SetFill(colRank, 10F, 75);
+            // Cột Mã KH: Cố định 68px, căn giữa, hiển thị hoàn toàn "Mã KH" (không bị cắt thành "Mã ...")
+            colId.HeaderText = "Mã KH";
+            colId.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            colId.Width = 68;
+            colId.MinimumWidth = 65;
+            colId.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            colId.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
+            // Cột Tên khách hàng: Co giãn linh hoạt (Fill 35%), tối thiểu 115px, vừa vặn họ tên đầy đủ
+            colName.HeaderText = "Tên khách hàng";
+            colName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            colName.FillWeight = 35F;
+            colName.MinimumWidth = 115;
+            colName.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            colName.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+
+            // Cột Số điện thoại: Cố định 105px, căn giữa, hiển thị hoàn toàn "Số điện thoại"
+            colPhone.HeaderText = "Số điện thoại";
+            colPhone.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            colPhone.Width = 105;
+            colPhone.MinimumWidth = 100;
+            colPhone.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            colPhone.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+            // Cột Địa chỉ: Co giãn lớn nhất (Fill 65%), tối thiểu 120px, chiếm tối đa không gian còn lại
+            colAddress.HeaderText = "Địa chỉ";
+            colAddress.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            colAddress.FillWeight = 65F;
+            colAddress.MinimumWidth = 120;
+            colAddress.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            colAddress.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+
+            // Cột Điểm thưởng: Cố định 108px, căn giữa tiêu đề, căn phải dữ liệu số -> hiển thị hoàn toàn "Điểm thưởng" (không bị cắt thành "Điểm thư...")
+            colPoints.HeaderText = "Điểm thưởng";
+            colPoints.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            colPoints.Width = 108;
+            colPoints.MinimumWidth = 105;
             colPoints.DefaultCellStyle = new DataGridViewCellStyle
             {
                 Format = "N0",
                 FormatProvider = ViCulture,
-                Alignment = DataGridViewContentAlignment.MiddleRight
+                Alignment = DataGridViewContentAlignment.MiddleRight,
+                Font = new Font("Segoe UI", 9F),
+                Padding = new Padding(3, 0, 3, 0)
             };
-        }
+            colPoints.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
-        private static void SetFill(DataGridViewColumn col, float weight, int minWidth)
-        {
-            col.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            col.FillWeight = weight;
-            col.MinimumWidth = minWidth;
+            // Cột Hạng thẻ: Cố định 80px, căn giữa, hiển thị hoàn toàn "Hạng thẻ"
+            colRank.HeaderText = "Hạng thẻ";
+            colRank.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            colRank.Width = 80;
+            colRank.MinimumWidth = 76;
+            colRank.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            colRank.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
 
         // Font đậm dùng chung cho cột Hạng thẻ (tạo 1 lần, tránh tạo Font mới mỗi lần vẽ ô)
-        private static readonly Font RankFont = new Font("Segoe UI", 10F, FontStyle.Bold);
+        private static readonly Font RankFont = new Font("Segoe UI", 9.5F, FontStyle.Bold);
 
         // Tô màu chữ cột "Hạng thẻ" để nhìn nhanh khách VIP
         private void dgvCustomers_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
@@ -140,6 +212,7 @@ namespace MiniSupermarket.WinForms
 
             string rank = (e.Value?.ToString() ?? string.Empty).Trim();
             style.Font = RankFont;
+            style.Alignment = DataGridViewContentAlignment.MiddleCenter;
             if (rank.Equals("Vàng", StringComparison.OrdinalIgnoreCase))
                 style.ForeColor = Color.FromArgb(180, 83, 9);
             else if (rank.Equals("Bạc", StringComparison.OrdinalIgnoreCase))

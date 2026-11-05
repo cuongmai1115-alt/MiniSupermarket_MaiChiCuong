@@ -27,7 +27,7 @@ namespace MiniSupermarket.API.Controllers
         {
             var username = (request.Username ?? string.Empty).Trim();
 
-            var user = await _db.Users.AsNoTracking()
+            var user = await _db.Users.AsNoTracking() //kt tài khoản và mật khẩu trong bảng Users (15 tài khoản seed) 
                 .FirstOrDefaultAsync(u => u.Username == username && u.Password == request.Password);
 
             if (user == null)
@@ -41,7 +41,7 @@ namespace MiniSupermarket.API.Controllers
             return Ok(new
             {
                 success = true,
-                token,
+                token,          //chuỗi mã Token JWT hợp lệ
                 role = user.Role,
                 username = user.Username,
                 fullName = user.FullName
@@ -53,10 +53,10 @@ namespace MiniSupermarket.API.Controllers
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Secret"] ?? "SupermarketSecretKeyDoAnMonHoc2026SecureString!!");
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+            var tokenDescriptor = new SecurityTokenDescriptor   //Tạo token JWT với thông tin username và role
             {
                 Subject = new ClaimsIdentity(new[] {
-                    new Claim(ClaimTypes.Name, username),
+                    new Claim(ClaimTypes.Name, username), 
                     new Claim(ClaimTypes.Role, role)
                 }),
                 Expires = DateTime.UtcNow.AddHours(2),

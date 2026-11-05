@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -54,6 +54,8 @@ namespace MiniSupermarket.WinForms
         /// <summary>
         /// Hàm nhúng động một Form con vào vùng panelMainContent
         /// </summary>
+        /// 37. đổi màn hình không giật lag
+
         private void OpenChildForm(Form childForm, string screenTitle, Button senderButton)
         {
             // Bỏ tham chiếu focus tới form con cũ trước khi đóng (tránh lỗi 'Invisible or disabled control cannot be activated')
@@ -146,11 +148,11 @@ namespace MiniSupermarket.WinForms
                     return true;
 
                 case "CASHIER":
-                    // Thu ngân: Chỉ truy cập màn hình Bán hàng (POS) và Khách hàng
+                    // Thu ngân: Chỉ truy cập màn hình Bán hàng (POS) sản phẩm và Quản lý Khách hàng,
                     btnPOS.Visible = true;
                     btnCustomer.Visible = true;
                     btnCategory.Visible = false;
-                    btnProduct.Visible = false;
+                    btnProduct.Visible = true;
                     btnReports.Visible = false;
                     btnUserManage.Visible = false;
                     return true;
