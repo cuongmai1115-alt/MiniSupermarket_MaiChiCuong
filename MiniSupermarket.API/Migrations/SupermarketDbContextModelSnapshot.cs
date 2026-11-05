@@ -1502,7 +1502,7 @@ namespace MiniSupermarket.API.Migrations
                     b.HasOne("MiniSupermarket.API.Models.Category", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Category");

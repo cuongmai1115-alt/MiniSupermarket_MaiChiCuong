@@ -53,16 +53,26 @@ namespace MiniSupermarket.API.Data
             // Order: mã hóa đơn duy nhất (VD: HD20261001-001)
             modelBuilder.Entity<Order>().HasIndex(o => o.OrderCode).IsUnique();
 
-            // =========================================================
+            // 1. Quan he 1 - N: Category - Product (1 Nhom hang co nhieu San pham)
+            modelBuilder.Entity<Category>()
+                .HasMany(c => c.Products)
+                .WithOne(p => p.Category)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 2. Quan he 1 - N: Order - OrderDetail (1 Hoa don co nhieu Chi tiet hoa don)
+            modelBuilder.Entity<Order>()
+                .HasMany(o => o.OrderDetails)
+                .WithOne(od => od.Order)
+                .HasForeignKey(od => od.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // B. DATA SEEDING - THỨ TỰ: bảng cha trước, bảng con sau
             // Users -> Categories -> Products -> Customers -> Orders -> OrderDetails
             // (Products cần Categories; Orders cần Customers; OrderDetails cần Orders + Products)
-            // =========================================================
 
-            // =========================================================
             // 1. USERS - 15 tài khoản (Admin / Cashier / Warehouse)
             // Cashier01..06 được dùng ở cột CashierUsername của bảng Orders.
-            // =========================================================
             modelBuilder.Entity<User>().HasData(
                 new User { Id = 1, Username = "admin01", Password = "123456", FullName = "Nguyễn Quản Trị", Role = "Admin", IsActive = true },
                 new User { Id = 2, Username = "admin02", Password = "123456", FullName = "Trần Giám Đốc", Role = "Admin", IsActive = true },

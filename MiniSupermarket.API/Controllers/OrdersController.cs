@@ -90,11 +90,24 @@ namespace MiniSupermarket.API.Controllers
                 });
             }
 
-            int earned = member != null ? (int)(total / 10000m) : 0;
+            // Tiêu chí 47: Đổi điểm thưởng trừ tiền hóa đơn (50 điểm = 50.000 đ)
+            decimal discount = 0;
+            int pointsToRedeem = Math.Max(0, req.PointsToRedeem);
+            if (pointsToRedeem > 0 && member != null)
+            {
+                if (member.RewardPoints < pointsToRedeem)
+                    return BadRequest(new { message = $"Khách hàng không đủ điểm tích lũy! (Hiện có: {member.RewardPoints} điểm, yêu cầu đổi: {pointsToRedeem} điểm)" });
+
+                discount = pointsToRedeem * 1000m;
+                member.RewardPoints -= pointsToRedeem;
+            }
+
+            decimal finalAmount = Math.Max(0, total - discount);
+            int earned = member != null ? (int)(finalAmount / 10000m) : 0;
             if (member != null) member.RewardPoints += earned;
 
             order.TotalItems = totalItems;
-            order.FinalAmount = total;
+            order.FinalAmount = finalAmount;
             order.RewardPoints = earned;
 
             _db.Orders.Add(order);
@@ -105,7 +118,10 @@ namespace MiniSupermarket.API.Controllers
             {
                 orderId = order.OrderId,
                 orderCode = order.OrderCode,
-                totalAmount = total,
+                subTotal = total,
+                discountAmount = discount,
+                pointsRedeemed = pointsToRedeem,
+                totalAmount = finalAmount,
                 pointsEarned = earned,
                 cashier = order.CashierUsername
             });
@@ -116,6 +132,7 @@ namespace MiniSupermarket.API.Controllers
     {
         public string? CashierUsername { get; set; }
         public string? CustomerPhone { get; set; }
+        public int PointsToRedeem { get; set; } = 0;
         public List<CheckoutItem> Items { get; set; } = new();
     }
 

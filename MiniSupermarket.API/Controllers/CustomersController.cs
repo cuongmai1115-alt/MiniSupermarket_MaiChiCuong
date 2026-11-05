@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,11 +19,61 @@ namespace MiniSupermarket.API.Controllers
             _context = context;
         }
 
+        // =========================================================================
+        // BUỔI 6 - BÀI TẬP 6.1: PHÂN TRANG DANH SÁCH KHÁCH HÀNG THÂN THIẾT
+        // GET: api/customers/paged?keyword=...&pageNumber=1&pageSize=5
+        // =========================================================================
+        [HttpGet("paged")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPagedCustomers(
+            [FromQuery] string? keyword,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 5)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1 || pageSize > 50) pageSize = 5;
+
+            var query = _context.Customers.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                string search = keyword.Trim().ToLower();
+                query = query.Where(c => c.CustomerName.ToLower().Contains(search) || c.PhoneNumber.Contains(search));
+            }
+
+            int totalItems = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var items = await query
+                .OrderByDescending(c => c.RewardPoints) // Sắp xếp theo thứ tự giảm dần của điểm thưởng
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(c => new CustomerResponseDto
+                {
+                    CustomerId = c.CustomerId,
+                    CustomerName = c.CustomerName,
+                    PhoneNumber = c.PhoneNumber,
+                    Address = c.Address,
+                    RewardPoints = c.RewardPoints,
+                    MembershipRank = c.MembershipRank
+                })
+                .ToListAsync();
+
+            return Ok(new PagedResult<CustomerResponseDto>
+            {
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                Items = items
+            });
+        }
+
         // GET: api/customers (Trả về DTO)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CustomerResponseDto>>> GetCustomers()
+        public async Task<IActionResult> GetCustomers()
         {
-            return await _context.Customers.AsNoTracking()
+            var list = await _context.Customers.AsNoTracking()
                 .OrderBy(c => c.CustomerId)
                 .Select(c => new CustomerResponseDto
                 {
@@ -34,17 +85,18 @@ namespace MiniSupermarket.API.Controllers
                     MembershipRank = c.MembershipRank
                 })
                 .ToListAsync();
+            return Ok(list);
         }
 
         // GET: api/customers/5 (Trả về DTO)
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<CustomerResponseDto>> GetCustomer(int id)
+        public async Task<IActionResult> GetCustomer(int id)
         {
             var customer = await _context.Customers.FindAsync(id);
             if (customer == null)
                 return NotFound(new { message = $"Không tìm thấy khách hàng có ID = {id}." });
 
-            return new CustomerResponseDto
+            return Ok(new CustomerResponseDto
             {
                 CustomerId = customer.CustomerId,
                 CustomerName = customer.CustomerName,
@@ -52,12 +104,12 @@ namespace MiniSupermarket.API.Controllers
                 Address = customer.Address,
                 RewardPoints = customer.RewardPoints,
                 MembershipRank = customer.MembershipRank
-            };
+            });
         }
 
         // GET: api/customers/search?keyword=abc (Trả về DTO)
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<CustomerResponseDto>>> Search([FromQuery] string? keyword)
+        public async Task<IActionResult> Search([FromQuery] string? keyword)
         {
             var query = _context.Customers.AsNoTracking().AsQueryable();
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -66,7 +118,7 @@ namespace MiniSupermarket.API.Controllers
                 query = query.Where(c => c.CustomerName.Contains(keyword) || c.PhoneNumber.Contains(keyword));
             }
 
-            return await query.OrderBy(c => c.CustomerId)
+            var list = await query.OrderBy(c => c.CustomerId)
                 .Select(c => new CustomerResponseDto
                 {
                     CustomerId = c.CustomerId,
@@ -77,11 +129,12 @@ namespace MiniSupermarket.API.Controllers
                     MembershipRank = c.MembershipRank
                 })
                 .ToListAsync();
+            return Ok(list);
         }
 
         // POST: api/customers (Nhận DTO, Trả DTO)
         [HttpPost]
-        public async Task<ActionResult<CustomerResponseDto>> PostCustomer([FromBody] CustomerRequestDto customerDto)
+        public async Task<IActionResult> PostCustomer([FromBody] CustomerRequestDto customerDto)
         {
             if (string.IsNullOrWhiteSpace(customerDto.CustomerName) || string.IsNullOrWhiteSpace(customerDto.PhoneNumber))
                 return BadRequest(new { message = "Tên khách hàng và số điện thoại không được để trống." });
@@ -135,7 +188,7 @@ namespace MiniSupermarket.API.Controllers
             existing.MembershipRank = string.IsNullOrWhiteSpace(customerDto.MembershipRank) ? "Chuẩn" : customerDto.MembershipRank.Trim();
 
             await _context.SaveChangesAsync();
-            return NoContent();
+            return Ok(new { success = true, message = "Cập nhật khách hàng thành công!" });
         }
 
         // DELETE: api/customers/5
@@ -149,7 +202,7 @@ namespace MiniSupermarket.API.Controllers
 
             _context.Customers.Remove(customer);
             await _context.SaveChangesAsync();
-            return NoContent();
+            return Ok(new { success = true, message = "Xóa khách hàng thành công!" });
         }
     }
 
@@ -167,10 +220,22 @@ namespace MiniSupermarket.API.Controllers
     public class CustomerRequestDto
     {
         public int CustomerId { get; set; }
+
+        [Required(ErrorMessage = "Tên khách hàng không được để trống.")]
+        [StringLength(100, ErrorMessage = "Tên khách hàng tối đa 100 ký tự.")]
         public string CustomerName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Số điện thoại không được để trống.")]
+        [StringLength(15, ErrorMessage = "Số điện thoại tối đa 15 ký tự.")]
         public string PhoneNumber { get; set; } = string.Empty;
+
+        [StringLength(200, ErrorMessage = "Địa chỉ tối đa 200 ký tự.")]
         public string? Address { get; set; }
+
+        [Range(0, int.MaxValue, ErrorMessage = "Điểm thưởng không được âm.")]
         public int RewardPoints { get; set; }
+
+        [StringLength(50, ErrorMessage = "Hạng thẻ tối đa 50 ký tự.")]
         public string MembershipRank { get; set; } = "Chuẩn";
     }
 }

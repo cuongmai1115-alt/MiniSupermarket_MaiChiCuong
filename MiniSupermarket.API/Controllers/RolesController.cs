@@ -17,15 +17,17 @@ namespace MiniSupermarket.API.Controllers
 
         // 1. READ: Lấy toàn bộ danh sách vai trò (GET /api/roles)
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
+            await Task.Yield();
             return Ok(_roles);
         }
 
         // 2. READ: Lấy chi tiết một vai trò theo ID (GET /api/roles/{id})
         [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
+            await Task.Yield();
             var role = _roles.FirstOrDefault(r => r.Id == id);
             if (role == null)
             {
@@ -36,8 +38,9 @@ namespace MiniSupermarket.API.Controllers
 
         // 3. CREATE: Thêm mới vai trò (POST /api/roles)
         [HttpPost]
-        public IActionResult Create([FromBody] Role newRole)
+        public async Task<IActionResult> Create([FromBody] Role newRole)
         {
+            await Task.Yield();
             if (string.IsNullOrWhiteSpace(newRole.RoleName))
             {
                 return BadRequest(new { message = "Tên vai trò không được để trống!" });
@@ -51,8 +54,9 @@ namespace MiniSupermarket.API.Controllers
 
         // 4. UPDATE: Cập nhật thông tin vai trò (PUT /api/roles/{id})
         [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody] Role updateRole)
+        public async Task<IActionResult> Update(int id, [FromBody] Role updateRole)
         {
+            await Task.Yield();
             var role = _roles.FirstOrDefault(r => r.Id == id);
             if (role == null)
             {
@@ -67,8 +71,9 @@ namespace MiniSupermarket.API.Controllers
 
         // 5. DELETE: Xóa vai trò theo ID (DELETE /api/roles/{id})
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
+            await Task.Yield();
             var role = _roles.FirstOrDefault(r => r.Id == id);
             if (role == null)
             {

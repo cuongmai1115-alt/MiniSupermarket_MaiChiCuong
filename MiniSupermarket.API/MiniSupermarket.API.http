@@ -1,6 +1,80 @@
-@MiniSupermarket.API_HostAddress = http://localhost:5142
+@MiniSupermarket.API_HostAddress = https://localhost:7132
 
-GET {{MiniSupermarket.API_HostAddress}}/weatherforecast/
+### 1. ĐĂNG NHẬP LẤY TOKEN (Role: Admin) -> Mong đợi: 200 OK
+# @name loginAdmin
+POST {{MiniSupermarket.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin01",
+  "password": "123456"
+}
+
+### Lưu biến Token từ response đăng nhập
+@authToken = {{loginAdmin.response.body.token}}
+
+#################################################################
+### TEST GET: Lấy danh sách -> Mong đợi: 200 OK
+#################################################################
+GET {{MiniSupermarket.API_HostAddress}}/api/categories
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
 ###
+
+#################################################################
+### TEST POST: Thêm mới hợp lệ -> Mong đợi: 201 Created
+#################################################################
+POST {{MiniSupermarket.API_HostAddress}}/api/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "categoryName": "Nước uống đóng chai",
+  "description": "Các loại nước khoáng, nước tinh khiết"
+}
+
+###
+
+#################################################################
+### TEST POST: Thêm mới SAI dữ liệu (để trống tên) -> Mong đợi: 400 Bad Request
+#################################################################
+POST {{MiniSupermarket.API_HostAddress}}/api/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "categoryName": "",
+  "description": "Thử cố tình gửi tên rỗng"
+}
+
+###
+
+#################################################################
+### TEST GET {id}: Tìm ID không tồn tại -> Mong đợi: 404 Not Found
+#################################################################
+GET {{MiniSupermarket.API_HostAddress}}/api/categories/999999
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+#################################################################
+### TEST PUT: Cập nhật danh mục -> Mong đợi: 204 No Content
+#################################################################
+PUT {{MiniSupermarket.API_HostAddress}}/api/categories/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "categoryName": "Bánh kẹo cao cấp",
+  "description": "Đã cập nhật mô tả"
+}
+
+###
+
+#################################################################
+### TEST DELETE: Xóa ID không tồn tại -> Mong đợi: 404 Not Found
+#################################################################
+DELETE {{MiniSupermarket.API_HostAddress}}/api/categories/999999
+Authorization: Bearer {{authToken}}

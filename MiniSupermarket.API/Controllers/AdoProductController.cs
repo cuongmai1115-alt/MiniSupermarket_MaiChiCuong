@@ -37,7 +37,7 @@ namespace MiniSupermarket.API.Controllers
         // =========================================================================
         // GET: api/ado-products/barcode/893456789001
         [HttpGet("barcode/{barcode}")]
-        public IActionResult GetProductByBarcode(string barcode)
+        public async Task<IActionResult> GetProductByBarcode(string barcode)
         {
             // 1. Kiểm tra tính hợp lệ của tham số đầu vào
             if (string.IsNullOrWhiteSpace(barcode))
@@ -64,13 +64,13 @@ namespace MiniSupermarket.API.Controllers
                     try
                     {
                         // 6. Mở kết nối vật lý tới SQL Server
-                        connection.Open();
+                        await connection.OpenAsync();
 
                         // 7. Khởi tạo luồng đọc nhanh Forward-Only SqlDataReader
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
                         {
                             // 8. Đọc bản ghi: reader.Read() trả về true nếu tìm thấy dòng dữ liệu
-                            if (reader.Read())
+                            if (await reader.ReadAsync())
                             {
                                 var productDto = new ProductLookupDto
                                 {
@@ -103,7 +103,7 @@ namespace MiniSupermarket.API.Controllers
         // =========================================================================
         // GET: api/ado-products/disconnected-cache
         [HttpGet("disconnected-cache")]
-        public IActionResult GetProductsDisconnected()
+        public async Task<IActionResult> GetProductsDisconnected()
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection")!;
 
@@ -123,7 +123,7 @@ namespace MiniSupermarket.API.Controllers
                     using (SqlDataAdapter adapter = new SqlDataAdapter(command))
                     {
                         // 4. Phương thức Fill(): Tự động Open -> Đọc nạp vào DataTable -> Tự động Close
-                        adapter.Fill(productTable);
+                        await Task.Run(() => adapter.Fill(productTable));
                     }
                 }
             } // Tại đây, kết nối CSDL ĐÃ ĐƯỢC ĐÓNG HOÀN TOÀN!
@@ -158,7 +158,7 @@ namespace MiniSupermarket.API.Controllers
         // =========================================================================
         // GET: api/ado-products/filter-stock?minStock=50
         [HttpGet("filter-stock")]
-        public IActionResult FilterByStock([FromQuery] int minStock = 50)
+        public async Task<IActionResult> FilterByStock([FromQuery] int minStock = 50)
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection")!;
             var list = new List<ProductLookupDto>();
@@ -176,10 +176,10 @@ namespace MiniSupermarket.API.Controllers
 
                     try
                     {
-                        connection.Open();
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        await connection.OpenAsync();
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
                         {
-                            while (reader.Read())
+                            while (await reader.ReadAsync())
                             {
                                 list.Add(new ProductLookupDto
                                 {
@@ -212,7 +212,7 @@ namespace MiniSupermarket.API.Controllers
         // =========================================================================
         // GET: api/ado-products/count-by-category
         [HttpGet("count-by-category")]
-        public IActionResult CountByCategory()
+        public async Task<IActionResult> CountByCategory()
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection")!;
             DataTable table = new DataTable("CategoryCounts");
@@ -228,7 +228,7 @@ namespace MiniSupermarket.API.Controllers
                 {
                     using (SqlDataAdapter adapter = new SqlDataAdapter(command))
                     {
-                        adapter.Fill(table);
+                        await Task.Run(() => adapter.Fill(table));
                     }
                 }
             }

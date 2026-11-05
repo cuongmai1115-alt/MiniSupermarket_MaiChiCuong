@@ -1,4 +1,4 @@
-﻿namespace MiniSupermarket.WinForms
+namespace MiniSupermarket.WinForms
 {
     partial class FormQuickReport
     {
@@ -165,7 +165,7 @@
             lblRevenueTitle.Padding = new Padding(10, 10, 0, 0);
             lblRevenueTitle.Size = new Size(220, 23);
             lblRevenueTitle.TabIndex = 0;
-            lblRevenueTitle.Text = "TỔNG DOANH THU";
+            lblRevenueTitle.Text = "DOANH THU HÔM NAY";
             // 
             // lblTotalRevenue
             // 
@@ -202,7 +202,7 @@
             lblOrdersTitle.Padding = new Padding(10, 10, 0, 0);
             lblOrdersTitle.Size = new Size(220, 23);
             lblOrdersTitle.TabIndex = 0;
-            lblOrdersTitle.Text = "TỔNG ĐƠN HÀNG";
+            lblOrdersTitle.Text = "TỔNG HÓA ĐƠN ĐÃ XUẤT";
             // 
             // lblTotalOrders
             // 
@@ -239,7 +239,7 @@
             lblProductsTitle.Padding = new Padding(10, 10, 0, 0);
             lblProductsTitle.Size = new Size(220, 23);
             lblProductsTitle.TabIndex = 0;
-            lblProductsTitle.Text = "SẢN PHẨM ĐÃ BÁN";
+            lblProductsTitle.Text = "KHÁCH HÀNG MỚI ĐĂNG KÝ";
             // 
             // lblTotalProductsSold
             // 
@@ -276,7 +276,7 @@
             lblAvgTitle.Padding = new Padding(10, 10, 0, 0);
             lblAvgTitle.Size = new Size(220, 23);
             lblAvgTitle.TabIndex = 0;
-            lblAvgTitle.Text = "TB / ĐƠN HÀNG";
+            lblAvgTitle.Text = "HÀNG SẮP HẾT (<= 10)";
             // 
             // lblAvgOrderValue
             // 

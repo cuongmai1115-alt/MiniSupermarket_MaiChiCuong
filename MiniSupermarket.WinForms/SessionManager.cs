@@ -7,7 +7,7 @@ namespace MiniSupermarket.WinForms
     // Lưu phiên đăng nhập dùng chung toàn ứng dụng
     public static class SessionManager
     {
-        public static string JwtToken { get; set; } = string.Empty;
+        public static string JwtToken { get; set; } = string.Empty; //38. Biến tĩnh lưu Token dùng chung toàn hệ thống
         public static string CurrentUsername { get; set; } = string.Empty;
         public static string CurrentFullName { get; set; } = string.Empty;
         public static string CurrentRole { get; set; } = string.Empty;
@@ -25,7 +25,7 @@ namespace MiniSupermarket.WinForms
         }
     }
 
-    public static class ApiClientService
+    public static class ApiClientService //40.Khai báo class tĩnh dùng chung toàn bộ ứng dụng WinForms.
     {
         // Nhớ chỉnh port cho đúng với API đang chạy (launchSettings: https://localhost:7132)
         private const string BaseUrl = "https://localhost:7132/api/";
@@ -48,7 +48,7 @@ namespace MiniSupermarket.WinForms
             }
         }
 
-        // Đăng nhập: trả về (thành công?, thông báo lỗi nếu có)
+        //38. Đăng nhập: trả về (thành công?, thông báo lỗi nếu có)
         public static async Task<(bool Ok, string Message)> LoginAsync(string username, string password)
         {
             var response = await _client.PostAsJsonAsync("auth/login", new { Username = username, Password = password });
@@ -71,7 +71,7 @@ namespace MiniSupermarket.WinForms
 
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
-            SessionManager.JwtToken = root.GetProperty("token").GetString() ?? string.Empty;
+            SessionManager.JwtToken = root.GetProperty("token").GetString() ?? string.Empty; //38 lưu Token vào SessionManager
             SessionManager.CurrentRole = root.GetProperty("role").GetString() ?? string.Empty;
             SessionManager.CurrentUsername = root.GetProperty("username").GetString() ?? username;
             SessionManager.CurrentFullName = root.GetProperty("fullName").GetString() ?? string.Empty;

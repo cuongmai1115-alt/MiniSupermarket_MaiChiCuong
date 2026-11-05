@@ -1,4 +1,4 @@
-﻿namespace MiniSupermarket.WinForms
+namespace MiniSupermarket.WinForms
 {
     partial class FormPOS
     {
@@ -49,6 +49,7 @@
             lblPhoneTitle = new Label();
             txtCustomerPhone = new TextBox();
             lblCustomerName = new Label();
+            chkRedeemPoints = new CheckBox();
             pnlTotalCard = new Panel();
             lblTotalAmount = new Label();
             lblTotalTitle = new Label();
@@ -315,7 +316,7 @@
             tlpRight.Margin = new Padding(3, 4, 3, 4);
             tlpRight.Name = "tlpRight";
             tlpRight.RowCount = 8;
-            tlpRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 128F));
+            tlpRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 162F));
             tlpRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 123F));
             tlpRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 101F));
             tlpRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 59F));
@@ -337,7 +338,7 @@
             grpCustomer.Margin = new Padding(0, 0, 0, 13);
             grpCustomer.Name = "grpCustomer";
             grpCustomer.Padding = new Padding(11, 5, 11, 8);
-            grpCustomer.Size = new Size(407, 115);
+            grpCustomer.Size = new Size(407, 149);
             grpCustomer.TabIndex = 0;
             grpCustomer.TabStop = false;
             grpCustomer.Text = "Khách hàng";
@@ -350,14 +351,16 @@
             tlpCustomer.Controls.Add(lblPhoneTitle, 0, 0);
             tlpCustomer.Controls.Add(txtCustomerPhone, 1, 0);
             tlpCustomer.Controls.Add(lblCustomerName, 0, 1);
+            tlpCustomer.Controls.Add(chkRedeemPoints, 0, 2);
             tlpCustomer.Dock = DockStyle.Fill;
             tlpCustomer.Location = new Point(11, 28);
             tlpCustomer.Margin = new Padding(3, 4, 3, 4);
             tlpCustomer.Name = "tlpCustomer";
-            tlpCustomer.RowCount = 2;
-            tlpCustomer.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
-            tlpCustomer.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tlpCustomer.Size = new Size(385, 79);
+            tlpCustomer.RowCount = 3;
+            tlpCustomer.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
+            tlpCustomer.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
+            tlpCustomer.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
+            tlpCustomer.Size = new Size(385, 113);
             tlpCustomer.TabIndex = 0;
             // 
             // lblPhoneTitle
@@ -366,7 +369,7 @@
             lblPhoneTitle.Font = new Font("Segoe UI", 9.5F);
             lblPhoneTitle.Location = new Point(3, 0);
             lblPhoneTitle.Name = "lblPhoneTitle";
-            lblPhoneTitle.Size = new Size(108, 48);
+            lblPhoneTitle.Size = new Size(108, 36);
             lblPhoneTitle.TabIndex = 0;
             lblPhoneTitle.Text = "Số điện thoại:";
             lblPhoneTitle.TextAlign = ContentAlignment.MiddleLeft;
@@ -376,7 +379,7 @@
             txtCustomerPhone.Anchor = AnchorStyles.Left | AnchorStyles.Right;
             txtCustomerPhone.BackColor = Color.FromArgb(249, 250, 251);
             txtCustomerPhone.Font = new Font("Segoe UI", 10.5F);
-            txtCustomerPhone.Location = new Point(117, 8);
+            txtCustomerPhone.Location = new Point(117, 4);
             txtCustomerPhone.Margin = new Padding(3, 4, 3, 4);
             txtCustomerPhone.MaxLength = 15;
             txtCustomerPhone.Name = "txtCustomerPhone";
@@ -390,14 +393,30 @@
             // 
             tlpCustomer.SetColumnSpan(lblCustomerName, 2);
             lblCustomerName.Dock = DockStyle.Fill;
-            lblCustomerName.Font = new Font("Segoe UI", 10F, FontStyle.Italic);
+            lblCustomerName.Font = new Font("Segoe UI", 9.5F);
             lblCustomerName.ForeColor = Color.FromArgb(107, 114, 128);
-            lblCustomerName.Location = new Point(3, 48);
+            lblCustomerName.Location = new Point(3, 36);
             lblCustomerName.Name = "lblCustomerName";
-            lblCustomerName.Size = new Size(379, 31);
+            lblCustomerName.Size = new Size(379, 46);
             lblCustomerName.TabIndex = 2;
             lblCustomerName.Text = "Khách vãng lai";
             lblCustomerName.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // chkRedeemPoints
+            // 
+            tlpCustomer.SetColumnSpan(chkRedeemPoints, 2);
+            chkRedeemPoints.Cursor = Cursors.Hand;
+            chkRedeemPoints.Dock = DockStyle.Fill;
+            chkRedeemPoints.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+            chkRedeemPoints.ForeColor = Color.FromArgb(37, 99, 235);
+            chkRedeemPoints.Location = new Point(3, 85);
+            chkRedeemPoints.Name = "chkRedeemPoints";
+            chkRedeemPoints.Size = new Size(379, 26);
+            chkRedeemPoints.TabIndex = 3;
+            chkRedeemPoints.Text = "Dùng 50 điểm trừ 50.000 đ vào hóa đơn";
+            chkRedeemPoints.UseVisualStyleBackColor = true;
+            chkRedeemPoints.Visible = false;
+            chkRedeemPoints.CheckedChanged += chkRedeemPoints_CheckedChanged;
             // 
             // pnlTotalCard
             // 
@@ -405,7 +424,7 @@
             pnlTotalCard.Controls.Add(lblTotalAmount);
             pnlTotalCard.Controls.Add(lblTotalTitle);
             pnlTotalCard.Dock = DockStyle.Fill;
-            pnlTotalCard.Location = new Point(0, 128);
+            pnlTotalCard.Location = new Point(0, 162);
             pnlTotalCard.Margin = new Padding(0, 0, 0, 13);
             pnlTotalCard.Name = "pnlTotalCard";
             pnlTotalCard.Padding = new Padding(16, 11, 16, 11);
@@ -441,7 +460,7 @@
             pnlCash.Controls.Add(txtCashReceived);
             pnlCash.Controls.Add(lblCashTitle);
             pnlCash.Dock = DockStyle.Fill;
-            pnlCash.Location = new Point(0, 251);
+            pnlCash.Location = new Point(0, 285);
             pnlCash.Margin = new Padding(0, 0, 0, 8);
             pnlCash.Name = "pnlCash";
             pnlCash.Size = new Size(407, 93);
@@ -481,7 +500,7 @@
             flowQuickCash.Controls.Add(btn200k);
             flowQuickCash.Controls.Add(btn500k);
             flowQuickCash.Dock = DockStyle.Fill;
-            flowQuickCash.Location = new Point(0, 352);
+            flowQuickCash.Location = new Point(0, 386);
             flowQuickCash.Margin = new Padding(0, 0, 0, 13);
             flowQuickCash.Name = "flowQuickCash";
             flowQuickCash.Size = new Size(407, 46);
@@ -589,7 +608,7 @@
             pnlChange.Controls.Add(lblChange);
             pnlChange.Controls.Add(lblChangeTitle);
             pnlChange.Dock = DockStyle.Fill;
-            pnlChange.Location = new Point(0, 411);
+            pnlChange.Location = new Point(0, 445);
             pnlChange.Margin = new Padding(0, 0, 0, 13);
             pnlChange.Name = "pnlChange";
             pnlChange.Padding = new Padding(16, 8, 16, 8);
@@ -718,6 +737,7 @@
         private System.Windows.Forms.Label lblPhoneTitle;
         private System.Windows.Forms.TextBox txtCustomerPhone;
         private System.Windows.Forms.Label lblCustomerName;
+        private System.Windows.Forms.CheckBox chkRedeemPoints;
 
         private System.Windows.Forms.Panel pnlTotalCard;
         private System.Windows.Forms.Label lblTotalTitle;

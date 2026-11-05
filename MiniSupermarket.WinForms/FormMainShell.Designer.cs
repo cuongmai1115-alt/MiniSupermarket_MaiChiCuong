@@ -248,12 +248,13 @@
             // 
             // lblUserInfo
             // 
-            lblUserInfo.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblUserInfo.AutoSize = true;
-            lblUserInfo.Font = new Font("Segoe UI", 10F);
-            lblUserInfo.Location = new Point(731, 28);
+            lblUserInfo.Dock = DockStyle.Right;
+            lblUserInfo.AutoSize = false;
+            lblUserInfo.Width = 550;
+            lblUserInfo.TextAlign = ContentAlignment.MiddleRight;
+            lblUserInfo.Padding = new Padding(0, 0, 20, 0);
+            lblUserInfo.Font = new Font("Segoe UI", 9.5F);
             lblUserInfo.Name = "lblUserInfo";
-            lblUserInfo.Size = new Size(97, 23);
             lblUserInfo.TabIndex = 1;
             lblUserInfo.Text = "Xin chào: ...";
             // 
