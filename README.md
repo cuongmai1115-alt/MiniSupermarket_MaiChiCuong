@@ -3,32 +3,6 @@
 
 ---
 
-## 📑 MỤC LỤC
-1. [Giới thiệu Tổng quan Đề tài](#1-giới-thiệu-tổng-quan-đề-tài)
-2. [Kiến trúc Hệ thống (Client - Server & Hybrid Data Access)](#2-kiến-trúc-hệ-thống-client---server--hybrid-data-access)
-3. [Cấu trúc Solution & Repository](#3-cấu-trúc-solution--repository)
-4. [Cơ sở Dữ liệu & Thiết kế Thực thể (Database Schema)](#4-cơ-sở-dữ-liệu--thiết-kế-thực-thể-database-schema)
-5. [Các Phân hệ Chức năng Chính](#5-các-phân-hệ-chức-năng-chính)
-   - [5.1 Phân hệ Xác thực & Phân quyền (Authentication & Authorization)](#51-phân-hệ-xác-thực--phân-quyền)
-   - [5.2 Phân hệ Bán hàng POS tại Quầy (Point of Sale)](#52-phân-hệ-bán-hàng-pos-tại-quầy-point-of-sale)
-   - [5.3 Phân hệ Quản lý Hàng hóa & Danh mục (Products & Categories)](#53-phân-hệ-quản-lý-hàng-hóa--danh-mục)
-   - [5.4 Phân hệ Khách hàng Thân thiết & Tích điểm (Loyalty Program)](#54-phân-hệ-khách-hàng-thân-thiết--tích-điểm)
-   - [5.5 Phân hệ Quản lý Nhân sự & Tài khoản (User Management)](#55-phân-hệ-quản-lý-nhân-sự--tài-khoản)
-   - [5.6 Phân hệ Báo cáo & Thống kê Doanh số (Reports & Analytics)](#56-phân-hệ-báo-cáo--thống-kê-doanh-số)
-6. [Giải pháp Kỹ thuật Nổi bật & Tối ưu Hiệu năng](#6-giải-pháp-kỹ-thuật-nổi-bật--tối-ưu-hiệu-năng)
-   - [6.1 Tối ưu tốc độ Quét mã vạch với ADO.NET thuần & SqlDataReader](#61-tối-ưu-tốc-độ-quét-mã-vạch-với-adonet-thuần--sqldatareader)
-   - [6.2 Xử lý Giao dịch Thanh toán Đa bảng với SqlTransaction (ACID)](#62-xử-lý-giao-dịch-thanh-toán-đa-bảng-với-sqltransaction-acid)
-   - [6.3 Cơ chế Bộ nhớ đệm Độc lập (Disconnected Cache) với DataTable](#63-cơ-chế-bộ-nhớ-đệm-độc-lập-disconnected-cache-với-datatable)
-   - [6.4 Bảo mật Truy vấn Chống tấn công SQL Injection](#64-bảo-mật-truy-vấn-chống-tấn-công-sql-injection)
-7. [Công nghệ và Công cụ Phát triển](#7-công-nghệ-và-công-cụ-phát-triển)
-8. [Hướng dẫn Cài đặt, Cấu hình và Vận hành Hệ thống](#8-hướng-dẫn-cài-đặt-cấu-hình-và-vận-hành-hệ-thống)
-9. [Bảng Tra cứu Mã lỗi Thường gặp & Hướng Khắc phục](#9-bảng-tra-cứu-mã-lỗi-thường-gặp--hướng-khắc-phục)
-10. [Kết quả Đạt được của Đồ án](#10-kết-quả-đạt-được-của-đồ-án)
-11. [Hướng Phát triển Mở rộng](#11-hướng-phát-triển-mở-rộng)
-12. [Tác Giả](#12-tác-giả)
-
----
-
 ## 1. Giới thiệu Tổng quan Đề tài
 
 Trong bối cảnh ngành bán lẻ và chuỗi cửa hàng tiện lợi phát triển nhanh chóng, việc quản trị hàng hóa, kiểm soát tồn kho tức thời và thực hiện thao tác tính tiền nhanh chóng, chính xác tại quầy đóng vai trò quyết định đến hiệu quả kinh doanh và trải nghiệm khách hàng.
